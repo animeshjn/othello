@@ -42,7 +42,7 @@ logger = logging.getLogger('app')
 logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
-client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+client = motor.motor_tornado.MotorClient()
 db = client.auth
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -63,18 +63,39 @@ class AuthLoginHandler(tornado.web.RequestHandler):
         # db = self.settings['db']
         logger.info("Login the Username {} Method=post".format(user))
         # do_find_one(Username=user,Password=pwd,isValid)
-        document = yield db.col.find_one({'user': user,'password': pwd })
-        logger.info("data found {}".format(document))
-        # s elf.redirect("/")
-        user = None
-        if document:
-            user = document['user']
-            self.set_secure_cookie("user", user)
-            self.redirect("/othello")
-        else:
-            logger.info("Redirecting to failed {} ".format(user))
+        @gen.coroutine
+        def do_find_one(Username,Password,callBack):
+            document = yield db.col.find_one({'user': Username,'password': Password })
+            logger.info("data found {}".format(document))
             self.redirect("/")
+            # pprint.pprint(document)
 
+        @gen.engine
+        def isValid(self,Username,Password,callback):
+            logger.info("Login Validation initiated")
+            #database checking code here ~animesh
+            #data = yield db.col.find_one({'user':Username,'password':Password})
+            do_find_one(Username,Password,callback)
+            # if document['user'] == Username:
+            #     logger.info("data found:{}".format(document))
+            #     return True
+            # else:
+            #     return False
+        @gen.engine
+        def checkLogin(document):
+            user = None
+            if document:
+                user = document['user']
+            else:
+               logger.info("Redirecting to failed {} ".format(user))
+               self.redirect("/")
+            if user:
+                self.set_secure_cookie("user", user)
+                self.redirect("/othello")
+            else:
+                self.redirect("/")
+
+        isValid(self, user, pwd, checkLogin)
 
     def get(self):
         self.redirect("/")
@@ -117,9 +138,8 @@ def main():
             #template_path=os.path.join(os.path.dirname(__file__), "templates"),
             #static_path=os.path.join(os.path.dirname(__file__), "static"),
             xsrf_cookies=True,
-            cookie_secret="Othello9876%$",
+            cookie_secret="secret123",
             debug=options.debug,
-
             autoreload=options.debug,
             **settings
             )
