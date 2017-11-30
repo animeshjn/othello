@@ -32,7 +32,7 @@ import tornado.web
 from tornado.options import options
 from app.config import settings
 from app.handlers import IndexHandler
-from app.handlers import GameHandler, GameSocketHandler
+from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler
 from app.game_managers import OthelloGameManager
 import motor.motor_tornado
 
@@ -42,7 +42,10 @@ logger = logging.getLogger('app')
 logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
-client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+#change the following password or cluster URI before running
+#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+client = motor.motor_tornado.MotorClient()
+
 db = client.auth
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -109,7 +112,9 @@ def main():
     	    (r"/$", MainHandler),
     	    (r"/auth/login", AuthLoginHandler),
             (r"/auth/logout", AuthLogoutHandler),
+            (r"/auth/register", AuthRegistrationHandler),
             (r"/othello$",GameHandler),
+
     	    (r"/othello/ws$",GameSocketHandler, dict(game_manager=othello_game_manager))
     ]
     app = tornado.web.Application(
@@ -119,7 +124,6 @@ def main():
             xsrf_cookies=True,
             cookie_secret="Othello9876%$",
             debug=options.debug,
-
             autoreload=options.debug,
             **settings
             )

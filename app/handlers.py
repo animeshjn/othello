@@ -8,6 +8,7 @@ from tornado import concurrent
 from tornado import gen
 
 from app.game_managers import InvalidGameError
+import re
 
 logger = logging.getLogger("app")
 
@@ -20,12 +21,81 @@ class IndexHandler(RequestHandler):
 	def get(self):
 		self.redirect('login')
 
+
+
+class AuthRegistrationHandler(RequestHandler):
+    def get(self):
+        if self.get_secure_cookie("user"):
+            self.redirect("/")
+        else:
+            self.render("register.html")
+
+    def post(self):
+    #Server side Input vaildation here
+             user = self.get_argument('usr', '')
+        #if user valid proceed
+             pwd = self.get_argument('pwd', '')
+             rpwd = self.get_argument('rpwd', '')
+             email =self.get_argument('email', '')
+        #if password regex True
+             passwordRegex = re.compile("[A-Za-z0-9@#!$%^&+=]{8,20}")
+             nameRegex = re.compile("[A-Za-z0-9]{3,20}")
+             emailRegex= re.compile("[^@]+@[^@]+\.[^@]+")
+             if re.match(passwordRegex, pwd, flags=0) and pwd == rpwd:
+                 logger.info("Password Pattern matched")
+                 if re.match(nameRegex,user):
+                     logger.info("User Pattern matched")
+                     if re.match(emailRegex,email):
+                         logger.info("Email Pattern matched")
+                         logger.info("All Patterns matched")
+                         logger.info("Securing password")
+                         #Check if username exists if not then:
+                         #create salted hash
+                         #create SHA256 salt and datastructure
+                         #used the initialized connection to MongoDB
+                         #Redirect to login
+                     else:
+                         logger.info("Empty or Invalid email!")
+                 else:
+                     logger.info("User validation Failed!")
+             else:
+                 logger.info("password Failed!")
+                      #username too long or too short
+
+             
+                 #fail message not a valid password or A
+
+
+             #if re.match()
+
+
+
+        #if re-enter password is same
+
+        #if email is valid and has valid length
+
+        #check if username already exists in database
+
+        #in case of error sendMessage action = regHandler, data = message
+
+
+        #push to database with empty game objects
+
+
+
+
 class GameHandler(RequestHandler):
 	def get(self):
 		if self.get_secure_cookie("user"):
 		    self.render("othello.html")
 		else:
 			self.redirect("/")
+
+
+    # def post(self):
+    # user = self.get_argument('usr', 'No data received')
+    # #pwd = self.get_argument('pwd', 'No data received')
+
 
 class GameSocketHandler(WebSocketHandler):
 
