@@ -42,8 +42,8 @@ logger = logging.getLogger('app')
 logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
-#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:jain@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
+client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+#client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
 db = client.auth
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -124,7 +124,8 @@ def main():
             autoreload=options.debug,
             **settings
             )
-    app.listen(options.port)
+    ssl_options={"certfile": "./certs/domain.crt", "keyfile": "./certs/domain.key"}
+    app.listen(options.port, ssl_options=ssl_options)
     tornado.ioloop.IOLoop.current().start()
 
 

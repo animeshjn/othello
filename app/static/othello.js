@@ -1,6 +1,6 @@
 // Create a new WebSocket.
 var APP = {
-  wsURL: 'ws://' + window.location.host + window.location.pathname + '/ws',
+  wsURL: 'wss://' + window.location.host + window.location.pathname + '/ws',
   connected: false,
   myTurn: false,
   gameOn: false,
