@@ -31,13 +31,19 @@
   .filler { display: none}
 }
 </style>
+<!-- Compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Compiled and minified JavaScript -->
+<script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 {% end %}
 {% block body %}
 
   <div class="align-items-center justify-content-center">
-  <h1 class="text-primary ">OTHELLO</h1>
+  <h1 class="text-primary">OTHELLO</h1>
 
   <div class="row">
     <div class="one-third column">
@@ -56,11 +62,34 @@
     </button>
     </form>
     </div>
-
-
   </div>
+  <div class="row">
   <h5 id="message" class="alert alert-info col-sm-3" >Connecting ...</h5>
-  <div class="center-block">
+  <div class="one-third column">
+<table class="bordered">
+        <thead>
+          <tr>
+              <th>Player Name</th>
+              <th>Marker</th>
+              <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="p1name"></td>
+            <td><i class="material-icons">radio_button_unchecked</i></td>
+            <td class="p1score"></td>
+          </tr>
+          <tr>
+            <td class="p2name"></td>
+            <td><i class="material-icons">brightness_1</i></td>
+            <td class="p2score"></td>
+          </tr>
+          </tbody>
+</table>
+</div>
+  </div>
+  <div class="container">
       <ul class="row">
         <li><button class="btn-marker" value="0,0"><span class="content"></span></button></li>
         <li><button class="btn-marker" value="0,1"><span class="content"></span></button></li>
@@ -142,7 +171,7 @@
         <li><button class="btn-marker" value="7,7"><span class="content"></span></button></li>
       </ul>
      </div>
-   </div>
+</div>
 {% end %}
 {% block js %}
   <script type="text/javascript" src="{{ static_url('othello.js') }}""></script>

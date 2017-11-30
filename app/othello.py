@@ -31,10 +31,14 @@ class Othello(object):
         self.game_choices = self._generate_all_game_positions()
 
         self.game_result = ""
+        self.player_a=""
+        self.player_b=""
         self.player_a_choices = set([(3,3), (4,4)])
         self.player_b_choices = set([(3,4), (4,3)])
         self.player_a_open = set([(3,5), (5,3), (2,4), (4,2)])
         self.player_b_open = set()
+        self.player_a_moves = set()
+        self.player_b_moves = set()
         self.player_a_turn = True
 
     @property
@@ -224,6 +228,7 @@ class Othello(object):
         opp_choices = self._get_player_choices(self.player_b_marker)
         (player_choices, opp_choices) = self.validate_move(player_choices, opp_choices, selected_item)
         player_choices.add(selected_item)
+        self.player_a_moves.add(selected_item)
         self.player_a_choices = player_choices
         self.player_b_choices = opp_choices
 
@@ -254,6 +259,7 @@ class Othello(object):
         opp_choices = self._get_player_choices(self.player_a_marker)
         (player_choices, opp_choices) = self.validate_move(player_choices, opp_choices, selected_item)
         player_choices.add(selected_item)
+        self.player_b_moves.add(selected_item)
         self.player_b_choices = player_choices
         self.player_a_choices = opp_choices
 

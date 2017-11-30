@@ -1,6 +1,6 @@
 // Create a new WebSocket.
 var APP = {
-  wsURL: 'ws://' + window.location.host + window.location.pathname + '/ws',
+  wsURL: 'wss://' + window.location.host + window.location.pathname + '/ws',
   connected: false,
   myTurn: false,
   gameOn: false,
@@ -126,13 +126,27 @@ var APP = {
 
   opponentMove: function(data) {
     APP.myTurn = true;
+
+    var myButton = "";
+    var oppButton = "";
+    if(data.opp_handler=="A")
+    {
+      myButton = String.fromCharCode(9679);
+      oppButton =  String.fromCharCode(9675);
+    }
+    else
+    {
+     myButton = String.fromCharCode(9675);
+     oppButton =  String.fromCharCode(9679); 
+    }
+
     var oppMove = data.opp_move;
     var unlockTiles = data.unlock;
     for(i=0, len=oppMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
        return this.value == (oppMove[i].toString());
      });
-     APP.setButtonState(selectedItem, String.fromCharCode(9679));
+     APP.setButtonState(selectedItem, oppButton);
    }
     $("button.btn-marker")
       .prop("disabled", true);
@@ -143,38 +157,58 @@ var APP = {
      selectedItem.prop("disabled", false);
    }
 
-    var mymove = data.my_move;
-    for(i=0, len=mymove.length;i<len;i++) {
+    var myMove = data.my_move;
+    for(i=0, len=myMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
-       return this.value == (mymove[i].toString());
+       return this.value == (myMove[i].toString());
      });
-     APP.setButtonState(selectedItem, String.fromCharCode(9675));
+     APP.setButtonState(selectedItem, myButton);
    }
+
+   $("td.p1score").text(myMove.length);
+   $("td.p2score").text(oppMove.length);
 
   },
 
   myMove: function(data) {
-    var mymove = data.my_move;
-    for(i=0, len=mymove.length;i<len;i++) {
+    var myMove = data.my_move;
+    var myButton = "";
+    var oppButton = "";
+    if(data.my_handler=="A")
+    {
+      myButton = String.fromCharCode(9675);
+      oppButton =  String.fromCharCode(9679);
+    }
+    else
+    {
+     myButton = String.fromCharCode(9679);
+     oppButton =  String.fromCharCode(9675); 
+    }
+   
+    for(i=0, len=myMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
-       return this.value == (mymove[i].toString());
+       return this.value == (myMove[i].toString());
      });
-     APP.setButtonState(selectedItem, String.fromCharCode(9675));
+     APP.setButtonState(selectedItem, myButton);
    }
 
-    var oppmove = data.opp_move;
-    for(i=0, len=oppmove.length;i<len;i++) {
+    var oppMove = data.opp_move;
+    for(i=0, len=oppMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
-       return this.value == (oppmove[i].toString());
+       return this.value == (oppMove[i].toString());
      });
-     APP.setButtonState(selectedItem, String.fromCharCode(9679));
+     APP.setButtonState(selectedItem, oppButton);
    }
+
+   $("td.p1score").text(myMove.length);
+   $("td.p2score").text(oppMove.length);
+
   },
 
   serverMessage: function(action, data) {
     switch (action) {
       case "open":
-        APP.messageUpdate("Connected to Game Server")
+        APP.messageUpdate(data.message)
         break;
       case "wait-pair":
         APP.gameStarted(data.game_id);
@@ -182,6 +216,10 @@ var APP = {
         break;
       case "paired":
         APP.gameStarted(data.game_id);
+        $("td.p1name").text(data.player1);
+        $("td.p2name").text(data.player2);
+        console.log(data.player1)
+        console.log(data.player2)
         APP.messageUpdate("Game Started...");
         break;
       case "move":
@@ -220,7 +258,7 @@ var APP = {
   },
 
   buttonSelected: function(button) {
-    APP.setButtonState(button, "X");
+    APP.setButtonState(button, String.fromCharCode(9675));
     // send the button value to server
     var data = {
       action: "move",

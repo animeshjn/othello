@@ -4,8 +4,6 @@ import json
 
 from tornado.web import RequestHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
-from tornado import concurrent
-from tornado import gen
 
 from app.game_managers import InvalidGameError
 import re
@@ -115,7 +113,9 @@ class GameSocketHandler(WebSocketHandler):
     def open(self):
         """Opens a Socket Connection to client
         """
-        self.send_message(action="open", message="Connected to Game Server")
+        user = self.get_secure_cookie("user").decode("utf-8")
+        message = "Hello "+user+" , you are connected to Game Server"
+        self.send_message(action="open", message=message)
 
 
     def on_message(self, message):
@@ -131,6 +131,7 @@ class GameSocketHandler(WebSocketHandler):
         abort - Abort the game currently on
         move - Record a move
         """
+        user = self.get_secure_cookie("user").decode("utf-8")
         data = json.loads(message)
         action = data.get("action", "")
         if action == "move":
@@ -139,9 +140,9 @@ class GameSocketHandler(WebSocketHandler):
             player_selection = data.get("player_move")
             player_move = (int(player_selection[0]), int(player_selection[2])) # Gives x,y coordinates
             if player_move:
-                (player_choices, opp_choices, opp_unlock) = self.game_manager.record_move(self.game_id, player_move, self)
-            self.send_message(action="opp-move", my_move=list(player_choices), opp_move=list(opp_choices))
-            self.send_pair_message(action="move", opp_move=list(player_choices), my_move=list(opp_choices), unlock=list(opp_unlock))
+                (handler, player_choices, opp_choices, opp_unlock) = self.game_manager.record_move(self.game_id, player_move, self)
+            self.send_message(action="opp-move", my_handler=handler, my_move=list(player_choices), opp_move=list(opp_choices))
+            self.send_pair_message(action="move", opp_handler=handler, opp_move=list(player_choices), my_move=list(opp_choices), unlock=list(opp_unlock))
 
             # Check if the game is still ON
             if self.game_manager.has_game_ended(self.game_id):
@@ -162,8 +163,11 @@ class GameSocketHandler(WebSocketHandler):
                 # Joined the game.
                 self.game_id = game_id
                 # Tell both players that they have been paired, so reset the pieces
-                self.send_message(action="paired", game_id=game_id)
-                self.send_pair_message(action="paired", game_id=game_id)
+                self.game_manager.register_player(self.game_id,2,user)
+                player1 = self.game_manager.get_player_name(self.game_id, "A")
+                player2 = self.game_manager.get_player_name(self.game_id, "B")
+                self.send_message(action="paired", game_id=game_id, player1=player1, player2=player2)
+                self.send_pair_message(action="paired", game_id=game_id, player1=player1, player2 = player2)
                 # One to wait, other to move
                 opp_choices = set([(3,3), (4,4)])
                 my_choices = set([(3,4), (4,3)])
@@ -174,6 +178,7 @@ class GameSocketHandler(WebSocketHandler):
         elif action == "new":
             # Create a new game id and respond the game id
             self.game_id = self.game_manager.new_game(self)
+            self.game_manager.register_player(self.game_id,1,user)
             self.send_message(action="wait-pair", game_id=self.game_id)
 
         elif action == "abort":
