@@ -29,7 +29,7 @@ class AuthRegistrationHandler(RequestHandler):
             self.redirect("/")
         else:
             self.render("register.html")
-
+    @coroutine
     def post(self):
     #Server side Input vaildation here
              user = self.get_argument('usr', '')
@@ -50,6 +50,7 @@ class AuthRegistrationHandler(RequestHandler):
                          logger.info("All Patterns matched")
                          logger.info("Securing password")
                          #Check if username exists if not then:
+                         
                          #create salted hash
                          #create SHA256 salt and datastructure
                          #used the initialized connection to MongoDB
@@ -62,7 +63,7 @@ class AuthRegistrationHandler(RequestHandler):
                  logger.info("password Failed!")
                       #username too long or too short
 
-             
+
                  #fail message not a valid password or A
 
 
