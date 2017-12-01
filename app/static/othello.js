@@ -129,19 +129,26 @@ var APP = {
 
     var myButton = "";
     var oppButton = "";
+    var oppMove = data.opp_move;
+    var unlockTiles = data.unlock;
+    var myMove = data.my_move;
+
     if(data.opp_handler=="A")
     {
       myButton = String.fromCharCode(9679);
       oppButton =  String.fromCharCode(9675);
+      $("td.p1score").text(oppMove.length);
+      $("td.p2score").text(myMove.length);
     }
     else
     {
      myButton = String.fromCharCode(9675);
      oppButton =  String.fromCharCode(9679);
+     $("td.p1score").text(myMove.length);
+     $("td.p2score").text(oppMove.length);
     }
 
-    var oppMove = data.opp_move;
-    var unlockTiles = data.unlock;
+    
     for(i=0, len=oppMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
        return this.value == (oppMove[i].toString());
@@ -157,16 +164,13 @@ var APP = {
      selectedItem.prop("disabled", false);
    }
 
-    var myMove = data.my_move;
+    
     for(i=0, len=myMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
        return this.value == (myMove[i].toString());
      });
      APP.setButtonState(selectedItem, myButton);
    }
-
-   $("td.p1score").text(myMove.length);
-   $("td.p2score").text(oppMove.length);
 
   },
 
@@ -174,15 +178,21 @@ var APP = {
     var myMove = data.my_move;
     var myButton = "";
     var oppButton = "";
+    var oppMove = data.opp_move;
+
     if(data.my_handler=="A")
     {
       myButton = String.fromCharCode(9675);
       oppButton =  String.fromCharCode(9679);
+      $("td.p1score").text(myMove.length);
+      $("td.p2score").text(oppMove.length);
     }
     else
     {
      myButton = String.fromCharCode(9679);
      oppButton =  String.fromCharCode(9675);
+     $("td.p1score").text(oppMove.length);
+     $("td.p2score").text(myMove.length);
     }
 
     for(i=0, len=myMove.length;i<len;i++) {
@@ -192,16 +202,13 @@ var APP = {
      APP.setButtonState(selectedItem, myButton);
    }
 
-    var oppMove = data.opp_move;
+    
     for(i=0, len=oppMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
        return this.value == (oppMove[i].toString());
      });
      APP.setButtonState(selectedItem, oppButton);
    }
-
-   $("td.p1score").text(myMove.length);
-   $("td.p2score").text(oppMove.length);
 
   },
 
@@ -218,8 +225,6 @@ var APP = {
         APP.gameStarted(data.game_id);
         $("td.p1name").text(data.player1);
         $("td.p2name").text(data.player2);
-        console.log(data.player1)
-        console.log(data.player2)
         APP.messageUpdate("Game Started...");
         break;
       case "move":
