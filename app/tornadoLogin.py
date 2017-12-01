@@ -42,17 +42,17 @@ logger = logging.getLogger('app')
 logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
-<<<<<<< HEAD
+
 #change the following password or cluster URI before running
 #client = motor.motor_tornado.MotorClient('mongodb://animeshjn:@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 client = motor.motor_tornado.MotorClient()
+# client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+# #client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
 
-=======
-client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-#client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
->>>>>>> bf8298e11c2c995d134351c90069d94894d4c456
 db = client.auth
+
 class MainHandler(tornado.web.RequestHandler):
+    """Main handler for the application """
     def get(self):
         #this is '/'
         #login page if secure cookie has no user
@@ -63,9 +63,10 @@ class MainHandler(tornado.web.RequestHandler):
         else:
             self.render("login.html")
 class AuthLoginHandler(tornado.web.RequestHandler):
-
+    """Login Authorization Handler"""
     @gen.coroutine
     def post(self):
+        """Handles the POST request for the Login to Othello"""
         user = self.get_argument('usr', 'No data received')
         pwd = self.get_argument('pwd', 'No data received')
         # db = self.settings['db']
@@ -85,6 +86,7 @@ class AuthLoginHandler(tornado.web.RequestHandler):
 
 
     def get(self):
+        """Handles the Get Request for Login to Othello"""
         self.redirect("/")
 
 class AuthLogoutHandler(tornado.web.RequestHandler):

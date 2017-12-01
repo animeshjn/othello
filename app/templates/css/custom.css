@@ -1,0 +1,94 @@
+body, html {
+	width: 100%;
+	height: 100%;
+	background: #ABB7B7;
+}
+
+.main {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.logo img {
+	width: 120px;
+	height: 120px;
+	display: block;
+	margin: auto;
+	margin-bottom: 20px;
+}
+
+.item {
+	margin: 10px;
+	height: 620px;
+	width: 500px;
+	background: #fff;
+	border-radius: 5px;
+}
+
+.content {
+	height: 100%;
+	padding: 40px;
+	align-items: center;
+	justify-content: center;
+}
+
+.in {
+	padding: 15px;
+}
+
+input[type=text],
+input[type=password],
+input[type=email] {
+	background: 0 0;
+	border: 0;
+	box-shadow: none;
+	border-bottom: 1px solid #afb5c1; 
+}
+
+.lg {
+	margin-bottom: 20px;
+}
+
+.input-group-addon{
+	background: 0 0;
+	border: 0;
+	color: #afb5c1; 	
+}
+
+.btn-info {
+	margin: auto;
+	border: 0; 
+	width: 200px !important;
+	background: #4183D7;
+	border-radius: 30px;
+}
+
+.btn-danger {
+	margin: auto;
+	border: 0;
+	width: 200px !important;
+	background: #95A5A6;
+	border-radius: 30px;
+}
+
+#back a  {
+	color: #fff;
+	text-decoration: none;
+}
+
+.btn-success {
+	margin: auto;
+	border: 0; 
+	width: 200px !important;	
+	border-radius: 30px;
+}
+
+input[type=text],
+input[type=password],
+input[type=email]:focus{
+	box-shadow: none !important;
+ 
+}

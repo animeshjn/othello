@@ -1,14 +1,18 @@
 from builtins import super
 import logging
 import json
-
+from tornado import gen
+import motor.motor_tornado
+import tornado.escape
+import bcrypt
 from tornado.web import RequestHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
-
 from app.game_managers import InvalidGameError
 import re
 
 logger = logging.getLogger("app")
+client = motor.motor_tornado.MotorClient()
+db = client.auth
 
 class BaseHandler(RequestHandler):
     def get_current_user(self):
@@ -22,12 +26,25 @@ class IndexHandler(RequestHandler):
 
 
 class AuthRegistrationHandler(RequestHandler):
+    def send_message(self, action, **data):
+        """Sends the message to the connected client
+        """
+        message = {
+            "action": action,
+            "data": data
+        }
+        self.write_message(json.dumps(message))
+
     def get(self):
         if self.get_secure_cookie("user"):
             self.redirect("/")
         else:
-            self.render("register.html")
-    @coroutine
+            try:
+                errormessage = self.get_argument("error_message")
+            except:
+                errormessage = ""
+            self.render("register.html",error_message=errormessage)
+    @gen.coroutine
     def post(self):
     #Server side Input vaildation here
              user = self.get_argument('usr', '')
@@ -44,22 +61,41 @@ class AuthRegistrationHandler(RequestHandler):
                  if re.match(nameRegex,user):
                      logger.info("User Pattern matched")
                      if re.match(emailRegex,email):
-                         logger.info("Email Pattern matched")
-                         logger.info("All Patterns matched")
-                         logger.info("Securing password")
-                         #Check if username exists if not then:
-                         
+                         logger.info("All Patterns matched")                         
+                         #Check if username exists
+                         document = yield db.col.find_one({'user': user})
+                         if bool(document):
+                             logger.info("User already exists")
+                             #self.send_message(action="invalidUser",data="")
+                             self.render("register.html",error_message="User already exists")
+                         else:
+                             logger.info("User does not exist")
+                             logger.info("Securing password")
+                             logger.info("Attempting secure connection")
+                             yield register_user(user,email,pwd)
+                             self.redirect("/")
+                             
+
+                         # # if not then:
+
+                         #
                          #create salted hash
                          #create SHA256 salt and datastructure
                          #used the initialized connection to MongoDB
                          #Redirect to login
                      else:
-                         logger.info("Empty or Invalid email!")
+                        self.render("register.html",error_message="Empty or invalid e-mail")
+                        self.finish()
                  else:
                      logger.info("User validation Failed!")
+                     self.render("register.html",error_message="Not a valid user name: Must be at-least 4 characters long and should contain only characters a-z A-Z")
+                     self.finish()
              else:
                  logger.info("password Failed!")
-                      #username too long or too short
+                 password_message="Invalid Password or passwords don't match, should be minimum 8 characters, Maximum 20 characters, Must contain uppercase, lowercase and special characters"
+                 self.render("register.html",error_message=password_message)
+                 self.finish()
+                 #username too long or too short
 
 
                  #fail message not a valid password or A
@@ -79,7 +115,34 @@ class AuthRegistrationHandler(RequestHandler):
 
 
         #push to database with empty game objects
+        
 
+
+@gen.coroutine
+def alreadyExists(newUser):
+    doc = yield db.col.find_one({'user': newUser})
+    logger.info("{}".format(doc))
+    return bool(not type(doc)==None.__class__)
+
+@gen.coroutine
+def register_user(user,email,password):
+    logger.info("Registering")
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf8'),salt)
+    data={
+        'user':user,
+        'email':email,
+        'salt':salt,
+        'hash':hashed
+    }
+    db.col.insert(data)
+
+#To check if a given password matches the one you generated (just create a hash of the password using the salt and compare it to the one on the database):
+
+# given_password = "password"
+# hashed_password = bcrypt.hashpw(password, salt) #Using the same salt used to hash passwords on your settings
+
+# hashed_password == hashed 
 
 
 

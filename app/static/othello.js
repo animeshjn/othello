@@ -137,7 +137,7 @@ var APP = {
     else
     {
      myButton = String.fromCharCode(9675);
-     oppButton =  String.fromCharCode(9679); 
+     oppButton =  String.fromCharCode(9679);
     }
 
     var oppMove = data.opp_move;
@@ -182,9 +182,9 @@ var APP = {
     else
     {
      myButton = String.fromCharCode(9679);
-     oppButton =  String.fromCharCode(9675); 
+     oppButton =  String.fromCharCode(9675);
     }
-   
+
     for(i=0, len=myMove.length;i<len;i++) {
      var selectedItem = $("button").filter(function() {
        return this.value == (myMove[i].toString());
@@ -230,6 +230,9 @@ var APP = {
         APP.myTurn = false;
         APP.myMove(data);
         APP.messageUpdate("Waiting for pair to Move...")
+        break;
+      case "invalidUser":
+        $("#user_message").text("Invalid user id or user already exists")
         break;
       case "end":
         APP.gameEnded();

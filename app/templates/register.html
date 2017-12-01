@@ -21,7 +21,7 @@
 .btn-block { width: 100%; display:block; }
 .message{display: block;
 color:red;
-background-color: #00ffffff;
+background-color: black;
 }
 * { -webkit-box-sizing:border-box; -moz-box-sizing:border-box; -ms-box-sizing:border-box; -o-box-sizing:border-box; box-sizing:border-box; }
 
@@ -44,8 +44,7 @@ body {
 	top: 50%;
 	left: 50%;
 	margin: -150px 0 0 -150px;
-	width:300px;
-	height:300px;
+	
 }
 .login h1 { color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.3); letter-spacing:1px; text-align:center; }
 
@@ -79,22 +78,29 @@ input:focus { box-shadow: inset 0 -5px 45px rgba(100,100,100,0.4), 0 1px 1px rgb
 
 </head>
 
-<body>
-  <div class="login">
-	<h1>Register at Othello</h1>
-    <form action="/auth/register" method="post">
+<body class="container"> 
+	
+	
+	
+	<div class="jumbotron login">
+			<h1 class="center text-primary">Register</h1>	
+	<form action="/auth/register" method="post">
       {% module xsrf_form_html() %}
       <table class="">
-      <tr><td><input type="text" name="usr" class="col-xs-2 " placeholder="Choose a Username" required="required"/></td><td><h8 id="user_message" class="message"></h8></td></tr>
-      <tr><td><input type="email" name="email" placeholder="Enter your email" required="required"/></td><td><span id="email_message" class="message"></span></td></tr>
-      <tr><td><input type="password" name="pwd" placeholder="Choose a Password" required="required" /></td><td><span id="password_message" class="message"></span></td></tr>
-      <tr><td><input type="password" name="rpwd" placeholder="Re-enter Password" required="required" /></td><td><span id="repassword_message" class="message"></span></td></tr>
+		<tr><td class="alert alert-danger"><span >{{error_message}}</span></td></tr>
+	  <tr><td><input type="text" name="usr" class="col-xs-2 " placeholder="Choose a Username" required="required" /></td></tr>
+      <tr><td><input type="email" name="email" placeholder="Enter your email" required="required"/></td></tr>
+      <tr><td><input type="password" name="pwd" placeholder="Choose a Password" required="required" /></td></tr>
+      <tr><td><input type="password" name="rpwd" placeholder="Re-enter Password" required="required" /></td></tr>
       <tr><td><button type="submit" class="btn btn-primary btn-block btn-large">Register to Othello</button></td></tr>
     </table>
     </form>
 </div>
 
-    <script  src="js/index.js"></script>
+    
 
 </body>
+<script type="text/javascript" src="{{ static_url('othello.js') }}""></script>
+<script type="text/javascript" src="{{ static_url('lib/jquery-3.1.0.min.js') }}"></script>
+
 </html>
