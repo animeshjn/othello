@@ -32,7 +32,7 @@ import tornado.web
 from tornado.options import options
 from app.config import settings
 from app.handlers import IndexHandler
-from app.handlers import GameHandler, GameSocketHandler
+from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler
 from app.game_managers import OthelloGameManager
 import motor.motor_tornado
 
@@ -42,10 +42,17 @@ logger = logging.getLogger('app')
 logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
+
+#change the following password or cluster URI before running
+#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+#client = motor.motor_tornado.MotorClient()
 client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 #client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
+
 db = client.auth
+
 class MainHandler(tornado.web.RequestHandler):
+    """Main handler for the application """
     def get(self):
         #this is '/'
         #login page if secure cookie has no user
@@ -56,9 +63,10 @@ class MainHandler(tornado.web.RequestHandler):
         else:
             self.render("login.html")
 class AuthLoginHandler(tornado.web.RequestHandler):
-
+    """Login Authorization Handler"""
     @gen.coroutine
     def post(self):
+        """Handles the POST request for the Login to Othello"""
         user = self.get_argument('usr', 'No data received')
         pwd = self.get_argument('pwd', 'No data received')
         # db = self.settings['db']
@@ -78,6 +86,7 @@ class AuthLoginHandler(tornado.web.RequestHandler):
 
 
     def get(self):
+        """Handles the Get Request for Login to Othello"""
         self.redirect("/")
 
 class AuthLogoutHandler(tornado.web.RequestHandler):
@@ -110,7 +119,9 @@ def main():
     	    (r"/$", MainHandler),
     	    (r"/auth/login", AuthLoginHandler),
             (r"/auth/logout", AuthLogoutHandler),
+            (r"/auth/register", AuthRegistrationHandler),
             (r"/othello$",GameHandler),
+
     	    (r"/othello/ws$",GameSocketHandler, dict(game_manager=othello_game_manager))
     ]
     app = tornado.web.Application(
@@ -120,7 +131,6 @@ def main():
             xsrf_cookies=True,
             cookie_secret="Othello9876%$",
             debug=options.debug,
-
             autoreload=options.debug,
             **settings
             )
