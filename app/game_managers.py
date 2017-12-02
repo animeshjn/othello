@@ -76,8 +76,13 @@ class GameManager(object):
             return game
         raise InvalidGameError
 
-
-
+    def rejoin_game(self, game_id, player, handler):
+        game = self.get_game(game_id)
+        if(player=="A"):
+            game["handler_a"] = handler
+        else:
+            game["handler_b"] = handler
+        
 class OthelloGameManager(GameManager):
     """Extends Game Manager to add methods specific to Othello Game
     """
@@ -109,7 +114,7 @@ class OthelloGameManager(GameManager):
         game = self.get_game(game_id)
         othello = game["othello"]
         othello.abort_game()
-        self.audit_trail(game_id)
+        self.audit_trail(game_id, "Aborted")
 
     def has_game_ended(self, game_id):
         """Returns True if the game has ended.
@@ -119,7 +124,7 @@ class OthelloGameManager(GameManager):
         othello = game["othello"]
         if othello.has_ended():
             game["result"] = othello.game_result
-            self.audit_trail(game_id)
+            self.audit_trail(game_id,"Completed")
             return True
         return False
 
@@ -148,21 +153,42 @@ class OthelloGameManager(GameManager):
         else:
             return game["othello"].player_b
 
+    def get_player_turn(self, game_id):
+        game = self.get_game(game_id)
+        if(game["othello"].player_a_turn):
+            return "A"
+        else:
+            return "B"
+
+    def get_player_choices(self, game_id, player, choiceType=None):
+        game = self.get_game(game_id)
+        if(choiceType=="open"):
+            if (player=="A"):
+                return game["othello"].player_a_open
+            else:
+                return game["othello"].player_b_open
+        else:
+            if (player=="A"):
+                return game["othello"].player_a_choices
+            else:
+                return game["othello"].player_b_choices
+
+
     @gen.coroutine
-    def audit_trail(self, game_id):
+    def audit_trail(self, game_id, status=None):
         game = self.get_game(game_id)
         if (game["othello"].game_result==""):
             result="NA"
         else:
             result=game["othello"].game_result
-        db.game.update_one({'_id':game_id},{'$set': {'status':'Closed', 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
+        db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
 
     @gen.coroutine
     def register_player(self, game_id, player_id, user):
         game = self.get_game(game_id)
         if (player_id==1):
             game["othello"].player_a=user
-            db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})
+            db.game.insert_one({'_id':game_id, 'player1':user, 'player2':'', 'status':'Open'})
         else:
             game["othello"].player_b=user
-            db.game.update_one({'_id':game_id},{'$set': {'player2':user}})
+            db.game.update_one({'_id':game_id},{'$set': {'status':'InProgress','player2':user}})

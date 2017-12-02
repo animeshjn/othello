@@ -217,6 +217,7 @@ class Othello(object):
         return open_set
 
     def record_player_a_move(self, selected_item):
+        
         if self.has_ended():
             raise InvalidMoveError("Game is not On.  Cannot record a move.")
 
@@ -236,7 +237,7 @@ class Othello(object):
         self.game_choices = self.game_choices[:item_idx] + self.game_choices[item_idx+1:] # Removes index position
 
         self.player_b_open = self.open_positions(opp_choices, player_choices)
-
+        self.player_a_turn=False
         if self.check_win_condition(self.player_a_marker):
             self.game_result = self.player_a_marker
 
@@ -246,6 +247,7 @@ class Othello(object):
 
 
     def record_player_b_move(self, selected_item):
+        
         """Records Player B Move
         """
         if self.has_ended():
@@ -267,7 +269,7 @@ class Othello(object):
         self.game_choices = self.game_choices[:item_idx] + self.game_choices[item_idx+1:] # Removes index position
 
         self.player_a_open = self.open_positions(opp_choices, player_choices)
-
+        self.player_a_turn=True
         if self.check_win_condition(self.player_b_marker):
             self.game_result = self.player_b_marker
 
