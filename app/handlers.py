@@ -171,16 +171,63 @@ class GameSocketHandler(WebSocketHandler):
         else:
             self.redirect("/")
 
-
-
+    def search_games(self, user=None):
+        games = self.game_manager.games
+        open_games = list()
+        resume_gameid=None
+        player=None
+        for game_id in games.keys():
+            try:
+                handler=games[game_id]["handler_b"]
+                if(self.game_manager.get_player_name(game_id, "B")==user):
+                    resume_gameid=game_id
+                    player = "B"
+                elif(self.game_manager.get_player_name(game_id, "A")==user):
+                    resume_gameid=game_id
+                    player = "A"
+            except KeyError:
+                open_games.append(game_id)
+        logger.info(open_games)
+        return (open_games, resume_gameid, player)
 
     def open(self):
         """Opens a Socket Connection to client
         """
         user = self.get_secure_cookie("user").decode("utf-8")
         message = "Hello "+user+" , you are connected to Game Server"
-        self.send_message(action="open", message=message)
+        (open_games, resume_gameid, player)=self.search_games(user)
+        if(resume_gameid==None):
+            self.send_message(action="open", message=message, open_games=open_games)
+        else:
+            self.resume_game(resume_gameid, player)    
 
+
+    def resume_game(self, resume_gameid, player):
+        self.game_manager.rejoin_game(resume_gameid, player, self)
+        self.game_id = resume_gameid
+        player1 = self.game_manager.get_player_name(self.game_id, "A")
+        player2 = self.game_manager.get_player_name(self.game_id, "B")
+        self.send_message(action="paired", game_id=self.game_id, player1=player1, player2=player2)
+        self.send_pair_message(action="paired", game_id=self.game_id, player1=player1, player2 = player2)
+        player_a_choices = self.game_manager.get_player_choices(self.game_id, "A")
+        player_b_choices = self.game_manager.get_player_choices(self.game_id, "B")
+        player_a_open = self.game_manager.get_player_choices(self.game_id, "A", "open")
+        player_b_open = self.game_manager.get_player_choices(self.game_id, "B", "open")
+        player_turn = self.game_manager.get_player_turn(self.game_id)
+        if (player=="A"): 
+            if (player_turn == "A"): # Player A resumed, player A's turn
+                self.send_message(action="move", my_move=list(player_a_choices), opp_move=list(player_b_choices), unlock=list(player_a_open)) #Message to Player A
+                self.send_pair_message(action="opp-move", opp_move=list(player_a_choices), my_move=list(player_b_choices)) # Message to PLayer B       
+            else: # Player A resumed, player B turn
+                self.send_message(action="opp-move", my_move=list(player_a_choices), opp_move=list(player_b_choices)) #Message to Player A
+                self.send_pair_message(action="opp-move", opp_move=list(player_a_choices), my_move=list(player_b_choices), unlock=list(player_b_open)) # Message to PLayer B       
+        else: # Player B resumed
+            if (player_turn == "A"): # Player B resumed, player A's turn
+                self.send_message(action="opp-move", my_move=list(player_b_choices), opp_move=list(player_a_choices)) #Message to Player B
+                self.send_pair_message(action="move", opp_move=list(player_b_choices), my_move=list(player_a_choices), unlock=list(player_a_open)) # Message to PLayer A       
+            else: # Player B resumed, player B turn
+                self.send_message(action="move", my_move=list(player_b_choices), opp_move=list(player_a_choices), unlock=list(player_b_open)) #Message to Player B
+                self.send_pair_message(action="opp-move", opp_move=list(player_b_choices), my_move=list(player_a_choices)) # Message to PLayer A       
 
     def on_message(self, message):
         """Respond to messages from connected client.
@@ -258,8 +305,8 @@ class GameSocketHandler(WebSocketHandler):
         """Overwrites WebSocketHandler.close.
         Close Game, send message to Paired client that game has ended
         """
-        self.send_pair_message(action="end", game_id=self.game_id, result="A")
-        self.game_manager.end_game(self.game_id)
+        self.send_pair_message(action="conn_error", game_id=self.game_id)#, result="A")
+        self.game_manager.audit_trail(self.game_id, "Paused")
 
     def send_pair_message(self, action, **data):
         """Send Message to paired Handler
