@@ -46,7 +46,10 @@ class AuthRegistrationHandler(RequestHandler):
             self.render("register.html",error_message=errormessage)
     @gen.coroutine
     def post(self):
-    #Server side Input vaildation here
+             '''Input validation of the Registration form and then the Registration 
+             Sends Error Message in case of invalid input Redirects to Registration Page in case of error
+             Redirects to Login Page in case of Successful Login'''
+        #Server side Input vaildation here
              user = self.get_argument('usr', '')
         #if user valid proceed
              pwd = self.get_argument('pwd', '')
@@ -74,15 +77,7 @@ class AuthRegistrationHandler(RequestHandler):
                              logger.info("Attempting secure connection")
                              yield register_user(user,email,pwd)
                              self.redirect("/")
-                             
-
-                         # # if not then:
-
-                         #
-                         #create salted hash
-                         #create SHA256 salt and datastructure
-                         #used the initialized connection to MongoDB
-                         #Redirect to login
+                  
                      else:
                         self.render("register.html",error_message="Empty or invalid e-mail")
                         self.finish()
@@ -95,25 +90,6 @@ class AuthRegistrationHandler(RequestHandler):
                  password_message="Invalid Password or passwords don't match, should be minimum 8 characters, Maximum 20 characters, Must contain uppercase, lowercase and special characters"
                  self.render("register.html",error_message=password_message)
                  self.finish()
-                 #username too long or too short
-
-
-                 #fail message not a valid password or A
-
-
-             #if re.match()
-
-
-
-        #if re-enter password is same
-
-        #if email is valid and has valid length
-
-        #check if username already exists in database
-
-        #in case of error sendMessage action = regHandler, data = message
-
-
         #push to database with empty game objects
         
 
@@ -136,13 +112,6 @@ def register_user(user,email,password):
         'hash':hashed
     }
     db.col.insert(data)
-
-#To check if a given password matches the one you generated (just create a hash of the password using the salt and compare it to the one on the database):
-
-# given_password = "password"
-# hashed_password = bcrypt.hashpw(password, salt) #Using the same salt used to hash passwords on your settings
-
-# hashed_password == hashed 
 
 
 

@@ -35,7 +35,7 @@ from app.handlers import IndexHandler
 from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler
 from app.game_managers import OthelloGameManager
 import motor.motor_tornado
-
+import bcrypt
 define("port", default=8888, help="run on the given port", type=int)
 define("debug", default=False, help="run in debug mode")
 logger = logging.getLogger('app')
@@ -45,8 +45,8 @@ logging.basicConfig(format=FORMAT)
 
 #change the following password or cluster URI before running
 #client = motor.motor_tornado.MotorClient('mongodb://animeshjn:@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-#client = motor.motor_tornado.MotorClient()
-client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+client = motor.motor_tornado.MotorClient()
+#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 #client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
 
 db = client.auth
@@ -69,17 +69,24 @@ class AuthLoginHandler(tornado.web.RequestHandler):
         """Handles the POST request for the Login to Othello"""
         user = self.get_argument('usr', 'No data received')
         pwd = self.get_argument('pwd', 'No data received')
-        # db = self.settings['db']
+        #Find the object for given username
         logger.info("Login the Username {} Method=post".format(user))
         # do_find_one(Username=user,Password=pwd,isValid)
-        document = yield db.col.find_one({'user': user,'password': pwd })
+        document = yield db.col.find_one({'user': user })
+        #find the salt
+
         logger.info("data found {}".format(document))
-        # s elf.redirect("/")
+        
         user = None
         if document:
             user = document['user']
-            self.set_secure_cookie("user", user)
-            self.redirect("/othello")
+            salt = document['salt']
+            newhash = bcrypt.hashpw(pwd.encode('utf8'),salt)
+            if newhash == document['hash']:
+                logger.info("Authenticated")
+                self.set_secure_cookie("user", user)
+                self.redirect("/othello")               
+            
         else:
             logger.info("Redirecting to failed {} ".format(user))
             self.redirect("/")
@@ -92,10 +99,9 @@ class AuthLoginHandler(tornado.web.RequestHandler):
 class AuthLogoutHandler(tornado.web.RequestHandler):
     def post(self):
         user = self.get_argument('usr', 'No data received')
-        pwd = self.get_argument('pwd', 'No data received')
+        
         logger.info("Logout the Username {} Method=post".format(user))
         self.clear_cookie("user")
-        logger.info("Self current user {} ".format(self.get_secure_cookie("user")))
         self.redirect("/")
 
     def get(self):
