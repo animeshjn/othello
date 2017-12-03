@@ -51,6 +51,9 @@ client = motor.motor_tornado.MotorClient()
 #client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 #client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
 
+
+#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+#client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
 db = client.auth
 
 class MainHandler(tornado.web.RequestHandler):
@@ -129,7 +132,6 @@ def main():
             (r"/auth/logout", AuthLogoutHandler),
             (r"/auth/register", AuthRegistrationHandler),
             (r"/othello$",GameHandler),
-
     	    (r"/othello/ws$",GameSocketHandler, dict(game_manager=othello_game_manager))
     ]
     secure_csrf_secret=base64.b64encode(os.urandom(50)).decode('ascii')
