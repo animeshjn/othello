@@ -129,7 +129,6 @@ def main():
             (r"/auth/logout", AuthLogoutHandler),
             (r"/auth/register", AuthRegistrationHandler),
             (r"/othello$",GameHandler),
-
     	    (r"/othello/ws$",GameSocketHandler, dict(game_manager=othello_game_manager))
     ]
     secure_csrf_secret=base64.b64encode(os.urandom(50)).decode('ascii')

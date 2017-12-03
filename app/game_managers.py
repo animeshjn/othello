@@ -118,7 +118,7 @@ class OthelloGameManager(GameManager):
 
     def has_game_ended(self, game_id):
         """Returns True if the game has ended.
-        Game cound end because of them won or it's a draw or no more open positions.
+        Game could end at win or draw or no more open positions.
         """
         game = self.get_game(game_id)
         othello = game["othello"]
@@ -182,6 +182,17 @@ class OthelloGameManager(GameManager):
         else:
             result=game["othello"].game_result
         db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
+
+    @gen.coroutine
+    def update_stats(self, game_id, status=None):
+        game = self.get_game(game_id)
+        if (game["othello"].game_result==""):
+            result="NA"
+        else:
+            result=game["othello"].game_result
+        db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
+        
+
 
     @gen.coroutine
     def register_player(self, game_id, player_id, user):

@@ -26,6 +26,11 @@ class IndexHandler(RequestHandler):
 
 
 class AuthRegistrationHandler(RequestHandler):
+    '''Handler for Registration 
+    Requires: Request Handler
+    Modifies: Application State
+    Effects: Validates data and redirects to login page if valid data 
+            redirects to Registration page with error in case of unsuccessful registration'''
     def send_message(self, action, **data):
         """Sends the message to the connected client
         """
@@ -46,7 +51,10 @@ class AuthRegistrationHandler(RequestHandler):
             self.render("register.html",error_message=errormessage)
     @gen.coroutine
     def post(self):
-             '''Input validation of the Registration form and then the Registration 
+             '''Requires: Self
+             Modifies: Application State
+             Effects:
+             Input validation of the Registration form and then the Registration 
              Sends Error Message in case of invalid input Redirects to Registration Page in case of error
              Redirects to Login Page in case of Successful Login'''
         #Server side Input vaildation here
@@ -102,6 +110,8 @@ def alreadyExists(newUser):
 
 @gen.coroutine
 def register_user(user,email,password):
+    '''Register the given user with the system by persistence into Database
+    with the hashed salt and initialize game states'''
     logger.info("Registering")
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode('utf8'),salt)
@@ -109,7 +119,8 @@ def register_user(user,email,password):
         'user':user,
         'email':email,
         'salt':salt,
-        'hash':hashed
+        'hash':hashed,
+        'stats':{'win':0,'lose':0,'draw':0}
     }
     db.col.insert(data)
 
