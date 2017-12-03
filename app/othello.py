@@ -71,7 +71,7 @@ class Othello(object):
         """Returns None.  Set Game Result to Aborted.  Removes all open Game positions.
         """
         self.game_choices = []  # Reset Game Choices
-        self.game_result = "E"  # Game Aborted
+        
 
     def _generate_all_game_positions(self):
         """Returns a list of possible open opitions on new game
