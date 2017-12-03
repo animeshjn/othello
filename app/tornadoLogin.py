@@ -36,6 +36,8 @@ from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler
 from app.game_managers import OthelloGameManager
 import motor.motor_tornado
 import bcrypt
+import base64
+import os
 define("port", default=8888, help="run on the given port", type=int)
 define("debug", default=False, help="run in debug mode")
 logger = logging.getLogger('app')
@@ -130,12 +132,13 @@ def main():
 
     	    (r"/othello/ws$",GameSocketHandler, dict(game_manager=othello_game_manager))
     ]
+    secure_csrf_secret=base64.b64encode(os.urandom(50)).decode('ascii')
     app = tornado.web.Application(
             urls,
             #template_path=os.path.join(os.path.dirname(__file__), "templates"),
             #static_path=os.path.join(os.path.dirname(__file__), "static"),
             xsrf_cookies=True,
-            cookie_secret="Othello9876%$",
+            cookie_secret=secure_csrf_secret,
             debug=options.debug,
             autoreload=options.debug,
             **settings
