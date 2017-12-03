@@ -293,9 +293,9 @@ class GameSocketHandler(WebSocketHandler):
             self.send_message(action="wait-pair", game_id=self.game_id)
 
         elif action == "abort":
-            self.game_manager.abort_game(self.game_id)
-            self.send_message(action="end", game_id=self.game_id, result="A")
-            self.send_pair_message(action="end", game_id=self.game_id, result="A")
+            self.game_manager.abort_game(self.game_id, self)
+            self.send_message(action="end", game_id=self.game_id, result="L")
+            self.send_pair_message(action="end", game_id=self.game_id, result="W")
             self.game_manager.end_game(self.game_id)
         else:
             self.send_message(action="error", message="Unknown Action: {}".format(action))

@@ -3,7 +3,7 @@ from tornado.concurrent import Future
 from tornado import gen
 import time
 import motor.motor_tornado
-client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+client = motor.motor_tornado.MotorClient('mongodb://animeshjn:jain@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 #client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
 db = client.games
 
@@ -108,11 +108,16 @@ class OthelloGameManager(GameManager):
             game["othello"].record_player_b_move(selection)
             return ("B", game["othello"].player_b_choices, game["othello"].player_a_choices, game["othello"].player_a_open)
 
-    def abort_game(self, game_id):
+    def abort_game(self, game_id, handler):
         """Aborts the game
         """
         game = self.get_game(game_id)
+        if (game["handler_a"] == handler):
+            game["result"] = "B"
+        else:
+            game["result"] = "A"
         othello = game["othello"]
+        game["othello"].game_result = game["result"]
         othello.abort_game()
         self.audit_trail(game_id, "Aborted")
 
@@ -136,13 +141,12 @@ class OthelloGameManager(GameManager):
             # Compute game result
             self.has_game_ended(game_id)
 
-        if game["result"] == "D" or game["result"] == "E":
-            return game["result"]
-        elif (game["result"] == "A" and game["handler_a"] == handler) or \
-                (game["result"] == "B" and game["handler_b"] == handler):
+        if ((game["result"] == "A" and game["handler_a"] == handler) or (game["result"] == "B" and game["handler_b"] == handler)) :
             return "W"
-        elif game["result"]:
+        elif ((game["result"] == "A" and game["handler_b"] == handler) or (game["result"] == "B" and game["handler_a"] == handler)):
             return "L"
+        elif game["result"] == "D" or game["result"] == "E":
+            return game["result"]
         else:
             return ""  # Game is still ON.
 
