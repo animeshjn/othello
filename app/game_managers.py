@@ -3,9 +3,16 @@ from tornado.concurrent import Future
 from tornado import gen
 import time
 import motor.motor_tornado
-client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-#client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
+import logging
+import logging.config
+
+#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
+client = motor.motor_tornado.MotorClient()
 db = client.games
+LOG = logging.getLogger('app')
+LOG.setLevel(logging.INFO)
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(format=FORMAT)
 
 class InvalidGameError(Exception):
     """Raised when Game is not in registry
@@ -133,6 +140,7 @@ class OthelloGameManager(GameManager):
 
         if game["result"] == "D" or game["result"] == "E":
             return game["result"]
+                   
         elif (game["result"] == "A" and game["handler_a"] == handler) or \
                 (game["result"] == "B" and game["handler_b"] == handler):
             return "W"
@@ -150,19 +158,56 @@ class OthelloGameManager(GameManager):
 
     @gen.coroutine
     def audit_trail(self, game_id):
+        LOG.info("Trail Called")
         game = self.get_game(game_id)
         if (game["othello"].game_result==""):
             result="NA"
         else:
             result=game["othello"].game_result
-        db.game.update_one({'_id':game_id},{'$set': {'status':'Closed', 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
+        #db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
 
+        #if game status is not completed
+        
+        if not status == "Completed":
+            db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
+            LOG.info("Trail update called once {} {}".format(game["othello"].player_a,game["othello"].player_b))
+            yield update_stats(self,game,result)
     @gen.coroutine
-    def register_player(self, game_id, player_id, user):
+    @gen.coroutine
+    def update_stats(self, game,result):
+        '''Update Win or lose stats of the game 
+        Requires: game is finished
+        Modifies: Persistence
+        '''
+        #game = self.get_game(game_id)
+        #If status is not already completed
+        if result=='W':
+            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.win':1}})
+            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.lose':1}})
+        if result=='L':
+            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.lose':1}})
+            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.win':1}})
+        if result=='D':
+            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.draw':1}})
+            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.draw':1}})
+        if result=='E':
+            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.lose':1}})
+            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.win':1}})
+            
+        #if document1
+
+        #document2=yield db.col.find_one({'user':game["othello"].player_b})
+
+
+        
+        #db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})    
+@gen.coroutine
+def register_player(self, game_id, player_id, user):
         game = self.get_game(game_id)
         if (player_id==1):
             game["othello"].player_a=user
+            #db.game.insert_one({'_id':game_id, 'player1':user, 'player2':'', 'status':'Open'})
             db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})
         else:
             game["othello"].player_b=user
-            db.game.update_one({'_id':game_id},{'$set': {'player2':user}})
+            #db.game.update_one({'_id':game_id},{'$set': {'status':'InProgress','player2':user}})            db.game.update_one({'_id':game_id},{'$set': {'player2':user}})
