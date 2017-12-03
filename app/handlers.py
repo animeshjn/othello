@@ -1,14 +1,18 @@
 from builtins import super
 import logging
 import json
-
+from tornado import gen
+import motor.motor_tornado
+import tornado.escape
+import bcrypt
 from tornado.web import RequestHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
-
 from app.game_managers import InvalidGameError
 import re
 
 logger = logging.getLogger("app")
+client = motor.motor_tornado.MotorClient()
+db = client.auth
 
 class BaseHandler(RequestHandler):
     def get_current_user(self):
@@ -22,14 +26,38 @@ class IndexHandler(RequestHandler):
 
 
 class AuthRegistrationHandler(RequestHandler):
+    '''Handler for Registration 
+    Requires: Request Handler
+    Modifies: Application State
+    Effects: Validates data and redirects to login page if valid data 
+            redirects to Registration page with error in case of unsuccessful registration'''
+    def send_message(self, action, **data):
+        """Sends the message to the connected client
+        """
+        message = {
+            "action": action,
+            "data": data
+        }
+        self.write_message(json.dumps(message))
+
     def get(self):
         if self.get_secure_cookie("user"):
             self.redirect("/")
         else:
-            self.render("register.html")
-
+            try:
+                errormessage = self.get_argument("error_message")
+            except:
+                errormessage = ""
+            self.render("register.html",error_message=errormessage)
+    @gen.coroutine
     def post(self):
-    #Server side Input vaildation here
+             '''Requires: Self
+             Modifies: Application State
+             Effects:
+             Input validation of the Registration form and then the Registration 
+             Sends Error Message in case of invalid input Redirects to Registration Page in case of error
+             Redirects to Login Page in case of Successful Login'''
+        #Server side Input vaildation here
              user = self.get_argument('usr', '')
         #if user valid proceed
              pwd = self.get_argument('pwd', '')
@@ -44,41 +72,57 @@ class AuthRegistrationHandler(RequestHandler):
                  if re.match(nameRegex,user):
                      logger.info("User Pattern matched")
                      if re.match(emailRegex,email):
-                         logger.info("Email Pattern matched")
-                         logger.info("All Patterns matched")
-                         logger.info("Securing password")
-                         #Check if username exists if not then:
-                         #create salted hash
-                         #create SHA256 salt and datastructure
-                         #used the initialized connection to MongoDB
-                         #Redirect to login
+                         logger.info("All Patterns matched")                         
+                         #Check if username exists
+                         document = yield db.col.find_one({'user': user})
+                         if bool(document):
+                             logger.info("User already exists")
+                             #self.send_message(action="invalidUser",data="")
+                             self.render("register.html",error_message="User already exists")
+                         else:
+                             logger.info("User does not exist")
+                             logger.info("Securing password")
+                             logger.info("Attempting secure connection")
+                             yield register_user(user,email,pwd)
+                             self.redirect("/")
+                  
                      else:
-                         logger.info("Empty or Invalid email!")
+                        self.render("register.html",error_message="Empty or invalid e-mail")
+                        self.finish()
                  else:
                      logger.info("User validation Failed!")
+                     self.render("register.html",error_message="Not a valid user name: Must be at-least 4 characters long and should contain only characters a-z A-Z")
+                     self.finish()
              else:
                  logger.info("password Failed!")
-                      #username too long or too short
-
-             
-                 #fail message not a valid password or A
-
-
-             #if re.match()
-
-
-
-        #if re-enter password is same
-
-        #if email is valid and has valid length
-
-        #check if username already exists in database
-
-        #in case of error sendMessage action = regHandler, data = message
-
-
+                 password_message="Invalid Password or passwords don't match, should be minimum 8 characters, Maximum 20 characters, Must contain uppercase, lowercase and special characters"
+                 self.render("register.html",error_message=password_message)
+                 self.finish()
         #push to database with empty game objects
+        
 
+
+@gen.coroutine
+def alreadyExists(newUser):
+    doc = yield db.col.find_one({'user': newUser})
+    logger.info("{}".format(doc))
+    return bool(not type(doc)==None.__class__)
+
+@gen.coroutine
+def register_user(user,email,password):
+    '''Register the given user with the system by persistence into Database
+    with the hashed salt and initialize game states'''
+    logger.info("Registering")
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf8'),salt)
+    data={
+        'user':user,
+        'email':email,
+        'salt':salt,
+        'hash':hashed,
+        'stats':{'win':0,'lose':0,'draw':0}
+    }
+    db.col.insert(data)
 
 
 
@@ -107,16 +151,63 @@ class GameSocketHandler(WebSocketHandler):
         else:
             self.redirect("/")
 
-
-
+    def search_games(self, user=None):
+        games = self.game_manager.games
+        open_games = list()
+        resume_gameid=None
+        player=None
+        for game_id in games.keys():
+            try:
+                handler=games[game_id]["handler_b"]
+                if(self.game_manager.get_player_name(game_id, "B")==user):
+                    resume_gameid=game_id
+                    player = "B"
+                elif(self.game_manager.get_player_name(game_id, "A")==user):
+                    resume_gameid=game_id
+                    player = "A"
+            except KeyError:
+                open_games.append(game_id)
+        logger.info(open_games)
+        return (open_games, resume_gameid, player)
 
     def open(self):
         """Opens a Socket Connection to client
         """
         user = self.get_secure_cookie("user").decode("utf-8")
         message = "Hello "+user+" , you are connected to Game Server"
-        self.send_message(action="open", message=message)
+        (open_games, resume_gameid, player)=self.search_games(user)
+        if(resume_gameid==None):
+            self.send_message(action="open", message=message, open_games=open_games)
+        else:
+            self.resume_game(resume_gameid, player)    
 
+
+    def resume_game(self, resume_gameid, player):
+        self.game_manager.rejoin_game(resume_gameid, player, self)
+        self.game_id = resume_gameid
+        player1 = self.game_manager.get_player_name(self.game_id, "A")
+        player2 = self.game_manager.get_player_name(self.game_id, "B")
+        self.send_message(action="paired", game_id=self.game_id, player1=player1, player2=player2)
+        self.send_pair_message(action="paired", game_id=self.game_id, player1=player1, player2 = player2)
+        player_a_choices = self.game_manager.get_player_choices(self.game_id, "A")
+        player_b_choices = self.game_manager.get_player_choices(self.game_id, "B")
+        player_a_open = self.game_manager.get_player_choices(self.game_id, "A", "open")
+        player_b_open = self.game_manager.get_player_choices(self.game_id, "B", "open")
+        player_turn = self.game_manager.get_player_turn(self.game_id)
+        if (player=="A"): 
+            if (player_turn == "A"): # Player A resumed, player A's turn
+                self.send_message(action="move", my_move=list(player_a_choices), opp_move=list(player_b_choices), unlock=list(player_a_open)) #Message to Player A
+                self.send_pair_message(action="opp-move", opp_move=list(player_a_choices), my_move=list(player_b_choices)) # Message to PLayer B       
+            else: # Player A resumed, player B turn
+                self.send_message(action="opp-move", my_move=list(player_a_choices), opp_move=list(player_b_choices)) #Message to Player A
+                self.send_pair_message(action="opp-move", opp_move=list(player_a_choices), my_move=list(player_b_choices), unlock=list(player_b_open)) # Message to PLayer B       
+        else: # Player B resumed
+            if (player_turn == "A"): # Player B resumed, player A's turn
+                self.send_message(action="opp-move", my_move=list(player_b_choices), opp_move=list(player_a_choices)) #Message to Player B
+                self.send_pair_message(action="move", opp_move=list(player_b_choices), my_move=list(player_a_choices), unlock=list(player_a_open)) # Message to PLayer A       
+            else: # Player B resumed, player B turn
+                self.send_message(action="move", my_move=list(player_b_choices), opp_move=list(player_a_choices), unlock=list(player_b_open)) #Message to Player B
+                self.send_pair_message(action="opp-move", opp_move=list(player_b_choices), my_move=list(player_a_choices)) # Message to PLayer A       
 
     def on_message(self, message):
         """Respond to messages from connected client.
@@ -194,8 +285,8 @@ class GameSocketHandler(WebSocketHandler):
         """Overwrites WebSocketHandler.close.
         Close Game, send message to Paired client that game has ended
         """
-        self.send_pair_message(action="end", game_id=self.game_id, result="A")
-        self.game_manager.end_game(self.game_id)
+        self.send_pair_message(action="conn_error", game_id=self.game_id)#, result="A")
+        self.game_manager.audit_trail(self.game_id, "Paused")
 
     def send_pair_message(self, action, **data):
         """Send Message to paired Handler

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block style %}
+<style>
+  ul.row {
+    margin: 0;
+  }
+  ul.row li button {
+      overflow: hidden;
+      height: 6em;
+      width: 6em;
+  }
+
+  ul.row li  {
+      display: inline;
+  }
+
+  button.btn-marker  {
+    padding: 0;
+    margin: 0;
+  }
+
+  button span {
+      font-size: 5em;
+      align-content: center;
+      margin: 0;
+      padding: 0;
+  }
+  body { padding-bottom: 70px; }
+/* or whatever mobile viewport */
+@media only screen and (max-width: 960px) {
+  .filler { display: none}
+}
+</style>
+<!-- Compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Compiled and minified JavaScript -->
+<script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+{% end %}
+{% block body %}
+
+  <div class="align-items-center justify-content-center">
+  <h1 class="text-primary">OTHELLO</h1>
+
+  <div class="row">
+    <div class="one-third column">
+      {% module xsrf_form_html() %}
+      <input class="u-full-width" type="text" placeholder="Enter Game Room # to Join" id="game-room">
+    </div>
+    <div class="one-third column">
+      <input class="button-primary" type="submit" id="game-submit" value="New Game">
+
+    </div>
+    <div class="one-third column">
+    <form action="/auth/logout" method="post">
+      {% module xsrf_form_html() %}
+    <button class="btn btn-danger" type="submit" id="game-logout">
+      Log out
+    </button>
+    </form>
+    </div>
+  </div>
+  <div class="row">
+  <h5 id="message" class="alert alert-info col-sm-3" >Connecting ...</h5>
+  <div class="one-third column">
+<table class="bordered">
+        
+</table>
+</div>
+  </div>
+</div>
+<div class="row">
+ <div class="container"> 
+  <div class="left-align">
+      <ul class="row">
+        
+        </ul>
+      
+     </div>
+   </div>
+<div class="center-align">
+ 
+ 
+
+</div>
+</div>
+{% end %}
+{% block js %}
+  <script type="text/javascript" src="{{ static_url('othello.js') }}""></script>
+{% end %}
