@@ -7,6 +7,7 @@ import motor.motor_tornado
 import logging
 import logging.config
 
+client = motor.motor_tornado.MotorClient()
 
 db = client.othello
 LOG = logging.getLogger('app')

@@ -12,7 +12,7 @@ from app.config import client
 import re
 
 logger = logging.getLogger("app")
-
+client = motor.motor_tornado.MotorClient()
 db = client.othello
 
 class BaseHandler(RequestHandler):
@@ -158,13 +158,18 @@ class GameHandler(RequestHandler):
     @gen.coroutine
     def get(self):
         if self.get_secure_cookie("user"):
-            db.game.find()
-            game_cursor= db.user.find() # creates cursor for multiple documents
-            doc=[]
-            while (yield game_cursor.fetch_next):
-                doc.append(game_cursor.next_object())
+            user = self.get_secure_cookie("user")
+            user = user.decode("utf-8")
             
-            self.render("othello.html",db_data=doc)
+            doc = yield db.user.find_one({'user':user}) # creates cursor for multiple documents
+            data_to_send =""
+            if doc:
+                data_to_send = doc['stats']
+            else :
+                data_to_send =""
+                
+            
+            self.render("othello.html",db_data=data_to_send)
             
         else:
             self.redirect("/")

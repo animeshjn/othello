@@ -70,6 +70,34 @@
     </div>
   </div>
   <div class="row">
+      <div class="one-third column"> 
+    <table class="table">
+          <thead>
+              <tr>
+                  <th scope="col">User Statistics</th>
+                  
+                </tr>
+            <tr>
+              <th scope="col">Won</th>
+              <th scope="col">Lost</th>
+              <th scope="col">Draw</th>
+            </tr>
+          </thead>
+          <tbody>
+              
+              <tr>
+                
+                <td>{{ db_data["win"] }}</td>
+                <td>{{ db_data["lose"] }}</td>
+                <td>{{ db_data["draw"] }}</td>
+                
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+  </div>
+  <div class="row">
   <h5 id="message" class="alert alert-info col-sm-3" >Connecting ...</h5>
   <div class="one-third column">
 <table class="bordered">
@@ -200,5 +228,5 @@
 </div>
 {% end %}
 {% block js %}
-  <script type="text/javascript" src="{{ static_url('othello.js') }}""></script>
+  <script type="text/javascript" src="{{ static_url('othello.js') }}"></script>
 {% end %}
