@@ -48,13 +48,7 @@ logging.basicConfig(format=FORMAT)
 #change the following password or cluster URI before running
 #client = motor.motor_tornado.MotorClient('mongodb://animeshjn:@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 client = motor.motor_tornado.MotorClient()
-#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-#client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
-
-
-#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-#client = motor.motor_tornado.MotorClient('mongodb://192.168.78.1:27017')
-db = client.auth
+db = client.othello
 
 class MainHandler(tornado.web.RequestHandler):
     """Main handler for the application """
@@ -77,7 +71,7 @@ class AuthLoginHandler(tornado.web.RequestHandler):
         #Find the object for given username
         logger.info("Login the Username {} Method=post".format(user))
         # do_find_one(Username=user,Password=pwd,isValid)
-        document = yield db.col.find_one({'user': user })
+        document = yield db.user.find_one({'user': user })
         #find the salt
 
         logger.info("data found {}".format(document))
