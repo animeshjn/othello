@@ -1,13 +1,13 @@
 from app.othello import Othello, InvalidMoveError
 from tornado.concurrent import Future
 from tornado import gen
+from app.config import client
 import time
 import motor.motor_tornado
 import logging
 import logging.config
 
-#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-client = motor.motor_tornado.MotorClient()
+
 db = client.othello
 LOG = logging.getLogger('app')
 LOG.setLevel(logging.INFO)
@@ -115,16 +115,22 @@ class OthelloGameManager(GameManager):
             game["othello"].record_player_b_move(selection)
             return ("B", game["othello"].player_b_choices, game["othello"].player_a_choices, game["othello"].player_a_open)
 
+    def set_game_status(self, game_id, status):
+        game = self.get_game(game_id)
+        game["othello"].game_status=status
 
     def abort_game(self, game_id,handler):
         """Aborts the game
         """
         game = self.get_game(game_id)
-        if (game["handler_a"] == handler):
-            game["result"] = "B"
-        else:
-            game["result"] = "A"
         othello = game["othello"]
+        if(othello.game_status=="InProgress"):
+            if (game["handler_a"] == handler):
+                game["result"] = "B"
+            else:
+                game["result"] = "A"
+        else:
+            game["result"] = "E"
         game["othello"].game_result = game["result"]
         othello.abort_game()
         self.audit_trail(game_id, "Aborted")        
@@ -224,18 +230,12 @@ class OthelloGameManager(GameManager):
             yield db.user.update({'user':game["othello"].player_a},{'$inc':{draw_str:int(1)}})
             yield db.user.update({'user':game["othello"].player_b},{'$inc':{draw_str:int(1)}})
             
-        
-
-
-
     @gen.coroutine
-    def register_player(self, game_id, player_id, user):
+    def register_players(self, game_id, player1, player2=None):
         game = self.get_game(game_id)
-        if (player_id==1):
-            game["othello"].player_a=user
-            db.game.insert_one({'_id':game_id, 'player1':user,'status':'Open'})
+        if(player2==None):
+            game["othello"].player_a=player1
         else:
-            game["othello"].player_b=user
-            db.game.update_one({'_id':game_id},{'$set': {'status':'InProgress','player2':user}})
-            #db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})
-            #db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})
+            game["othello"].player_b=player2    
+            db.game.insert_one({'_id':game_id, 'player1':player1,'player2':player2, 'status':'InProgress'})
+        

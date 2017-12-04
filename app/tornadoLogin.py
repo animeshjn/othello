@@ -31,6 +31,7 @@ import tornado.ioloop
 import tornado.web
 from tornado.options import options
 from app.config import settings
+from app.config import client
 from app.handlers import IndexHandler
 from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler, GameShowHandler
 from app.game_managers import OthelloGameManager
@@ -45,9 +46,6 @@ logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
 
-#change the following password or cluster URI before running
-#client = motor.motor_tornado.MotorClient('mongodb://animeshjn:@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
-client = motor.motor_tornado.MotorClient()
 db = client.othello
 
 class MainHandler(tornado.web.RequestHandler):
