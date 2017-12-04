@@ -8,7 +8,7 @@ import logging.config
 
 #client = motor.motor_tornado.MotorClient('mongodb://animeshjn:<>@cluster0-shard-00-00-1wwjj.mongodb.net:27017,cluster0-shard-00-01-1wwjj.mongodb.net:27017,cluster0-shard-00-02-1wwjj.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin')
 client = motor.motor_tornado.MotorClient()
-db = client.games
+db = client.othello
 LOG = logging.getLogger('app')
 LOG.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -115,14 +115,20 @@ class OthelloGameManager(GameManager):
             game["othello"].record_player_b_move(selection)
             return ("B", game["othello"].player_b_choices, game["othello"].player_a_choices, game["othello"].player_a_open)
 
-    def abort_game(self, game_id):
+
+    def abort_game(self, game_id,handler):
         """Aborts the game
         """
         game = self.get_game(game_id)
+        if (game["handler_a"] == handler):
+            game["result"] = "B"
+        else:
+            game["result"] = "A"
         othello = game["othello"]
+        game["othello"].game_result = game["result"]
         othello.abort_game()
-        self.audit_trail(game_id, "Aborted")
-
+        self.audit_trail(game_id, "Aborted")        
+        
     def has_game_ended(self, game_id):
         """Returns True if the game has ended.
         Game could end at win or draw or no more open positions.
@@ -181,7 +187,6 @@ class OthelloGameManager(GameManager):
             else:
                 return game["othello"].player_b_choices
 
-
     @gen.coroutine
     def audit_trail(self, game_id, status=None):
         game = self.get_game(game_id)
@@ -189,11 +194,11 @@ class OthelloGameManager(GameManager):
             result="NA"
         else:
             result=game["othello"].game_result
-        db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
         if not status == "Completed":
             db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
             LOG.info("Trail update called once {} {}".format(game["othello"].player_a,game["othello"].player_b))
-            yield update_stats(self,game,result)
+            yield self.update_stats(game,result)
+    
     @gen.coroutine
     def update_stats(self, game,result):
 
@@ -201,20 +206,23 @@ class OthelloGameManager(GameManager):
         Requires: game is finished
         Modifies: Persistence
         '''
+        win_str=str("stats.win")
+        lose_str=str("stats.lose")
+        draw_str=str("stats.draw")
         #game = self.get_game(game_id)
         #If status is not already completed
-        if result=='W':
-            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.win':1}})
-            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.lose':1}})
-        if result=='L':
-            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.lose':1}})
-            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.win':1}})
+        if result=='A':
+            LOG.info("Updating status for winning result of A {} {}".format(game["othello"].player_a,game["othello"].player_b))
+            yield db.user.update({'user':game["othello"].player_a},{'$inc':{win_str:int(1)}})
+            yield db.user.update({'user':game["othello"].player_b},{'$inc':{lose_str:int(1)}})
+        if result=='B':
+            LOG.info("Updating status for winning result of B ")
+            yield db.user.update({'user':game["othello"].player_a},{'$inc':{lose_str:int(1)}})
+            yield db.user.update({'user':game["othello"].player_b},{'$inc':{win_str:int(1)}})
         if result=='D':
-            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.draw':1}})
-            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.draw':1}})
-        if result=='E':
-            yield db.col.update({'user':game["othello"].player_a},{'$inc':{'stats.lose':1}})
-            yield db.col.update({'user':game["othello"].player_b},{'$inc':{'stats.win':1}})
+            LOG.info("Updating status for winning result of D ")
+            yield db.user.update({'user':game["othello"].player_a},{'$inc':{draw_str:int(1)}})
+            yield db.user.update({'user':game["othello"].player_b},{'$inc':{draw_str:int(1)}})
             
         #if document1
 
@@ -224,8 +232,10 @@ class OthelloGameManager(GameManager):
         
         #db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})    
 
-@gen.coroutine
-def register_player(self, game_id, player_id, user):
+
+
+    @gen.coroutine
+    def register_player(self, game_id, player_id, user):
         game = self.get_game(game_id)
         if (player_id==1):
             game["othello"].player_a=user
@@ -234,7 +244,4 @@ def register_player(self, game_id, player_id, user):
             game["othello"].player_b=user
             db.game.update_one({'_id':game_id},{'$set': {'status':'InProgress','player2':user}})
             #db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})
-            db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})
-        else:
-            game["othello"].player_b=user
-            #db.game.update_one({'_id':game_id},{'$set': {'status':'InProgress','player2':user}})            db.game.update_one({'_id':game_id},{'$set': {'player2':user}})
+            #db.game.insert_one({'_id':game_id, 'player1':user, 'status':'Open'})

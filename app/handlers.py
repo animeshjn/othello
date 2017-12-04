@@ -12,7 +12,7 @@ import re
 
 logger = logging.getLogger("app")
 client = motor.motor_tornado.MotorClient()
-db = client.auth
+db = client.othello
 
 class BaseHandler(RequestHandler):
     def get_current_user(self):
@@ -74,7 +74,7 @@ class AuthRegistrationHandler(RequestHandler):
                      if re.match(emailRegex,email):
                          logger.info("All Patterns matched")                         
                          #Check if username exists
-                         document = yield db.col.find_one({'user': user})
+                         document = yield db.user.find_one({'user': user})
                          if bool(document):
                              logger.info("User already exists")
                              #self.send_message(action="invalidUser",data="")
@@ -104,7 +104,7 @@ class AuthRegistrationHandler(RequestHandler):
 
 @gen.coroutine
 def alreadyExists(newUser):
-    doc = yield db.col.find_one({'user': newUser})
+    doc = yield db.user.find_one({'user': newUser})
     logger.info("{}".format(doc))
     return bool(not type(doc)==None.__class__)
 
@@ -122,7 +122,7 @@ def register_user(user,email,password):
         'hash':hashed,
         'stats':{'win':0,'lose':0,'draw':0}
     }
-    db.col.insert(data)
+    db.user.insert(data)
 
 
 
@@ -273,9 +273,9 @@ class GameSocketHandler(WebSocketHandler):
             self.send_message(action="wait-pair", game_id=self.game_id)
 
         elif action == "abort":
-            self.game_manager.abort_game(self.game_id)
-            self.send_message(action="end", game_id=self.game_id, result="A")
-            self.send_pair_message(action="end", game_id=self.game_id, result="A")
+            self.game_manager.abort_game(self.game_id, self)
+            self.send_message(action="end", game_id=self.game_id, result="L")
+            self.send_pair_message(action="end", game_id=self.game_id, result="W")
             self.game_manager.end_game(self.game_id)
         else:
             self.send_message(action="error", message="Unknown Action: {}".format(action))
