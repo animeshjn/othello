@@ -32,7 +32,7 @@ import tornado.web
 from tornado.options import options
 from app.config import settings
 from app.handlers import IndexHandler
-from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler
+from app.handlers import AuthRegistrationHandler, GameHandler, GameSocketHandler, GameShowHandler
 from app.game_managers import OthelloGameManager
 import motor.motor_tornado
 import bcrypt
@@ -62,7 +62,8 @@ class MainHandler(tornado.web.RequestHandler):
         else:
             self.render("login.html")
 class AuthLoginHandler(tornado.web.RequestHandler):
-    """Login Authorization Handler"""
+    """Login Authorization Handler
+    Requires: Request Handler with Username and Password"""
     @gen.coroutine
     def post(self):
         """Handles the POST request for the Login to Othello"""
@@ -126,6 +127,7 @@ def main():
             (r"/auth/logout", AuthLogoutHandler),
             (r"/auth/register", AuthRegistrationHandler),
             (r"/othello$",GameHandler),
+            (r"/allgames",GameShowHandler),
     	    (r"/othello/ws$",GameSocketHandler, dict(game_manager=othello_game_manager))
     ]
     secure_csrf_secret=base64.b64encode(os.urandom(50)).decode('ascii')

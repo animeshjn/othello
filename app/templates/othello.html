@@ -52,7 +52,13 @@
     </div>
     <div class="one-third column">
       <input class="button-primary" type="submit" id="game-submit" value="New Game">
-
+      <BR>
+      <form action="/allgames">
+        {% module xsrf_form_html() %}
+      <button class="btn btn-info" type="submit" id="game-all">
+        Past Games
+      </button>
+      </form>
     </div>
     <div class="one-third column">
     <form action="/auth/logout" method="post">
@@ -190,6 +196,7 @@
         <li class="collection-item" id="9"></li>
 </div>
 </div>
+
 </div>
 {% end %}
 {% block js %}

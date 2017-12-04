@@ -48,11 +48,11 @@
   <div class="row">
     <div class="one-third column">
       {% module xsrf_form_html() %}
-      <input class="u-full-width" type="text" placeholder="Enter Game Room # to Join" id="game-room">
-    </div>
-    <div class="one-third column">
-      <input class="button-primary" type="submit" id="game-submit" value="New Game">
-
+      <form action="/" >
+        {% module xsrf_form_html() %}
+      <button class="btn btn-danger" type="submit" id="game-home">
+        Back To Play
+      </button>  
     </div>
     <div class="one-third column">
     <form action="/auth/logout" method="post">
@@ -64,11 +64,40 @@
     </div>
   </div>
   <div class="row">
-  <h5 id="message" class="alert alert-info col-sm-3" >Connecting ...</h5>
+  
   <div class="one-third column">
-<table class="bordered">
+</div>  
+
+  <table class="table">
+      <thead>
         
-</table>
+        <tr>
+          <th scope="col">#Game ID</th>
+          <th scope="col">Player A</th>
+          <th scope="col">Player B</th>
+          <th scope="col">Won By</th>
+          <th scope="col">Score</th>
+          <th scope="col">Player A Moves</th>
+          <th scope="col">Player B Moves</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for game in data %}
+        <tr>
+          <th scope="row">{{ game['_id'] }}</th>
+          <td>{{ game['player1'] }}</td>
+          <td>{{ game['player2'] }}</td>
+          <td>Player {{ game['result'] }}</td>
+          <td>{{ game['score'] }}</td>
+          <td>{{ game['p1moves'] }}</td>
+          <td>{{ game['p2moves'] }}</td>
+          
+        </tr>
+        {% end %}
+        
+        
+      </tbody>
+    </table>
 </div>
   </div>
 </div>
@@ -89,5 +118,5 @@
 </div>
 {% end %}
 {% block js %}
-  <script type="text/javascript" src="{{ static_url('othello.js') }}""></script>
+  
 {% end %}

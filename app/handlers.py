@@ -23,8 +23,34 @@ class IndexHandler(RequestHandler):
 	def get(self):
 		self.redirect('login')
 
-
-
+class GameShowHandler(RequestHandler):
+    '''Requires: Tornado Request Handler
+    Modifies: Current View State
+    Effects: Show all the past games and their moves to authenticated user'''
+    @gen.coroutine
+    def get(self):
+        '''Display the data to Authenticated user'''
+        if self.get_secure_cookie("user"):
+            #Then Retrieve from existing connections
+            game_cursor= db.game.find() # creates cursor for multiple documents
+            doc=[]
+            data_to_send=[]
+            i = 0
+            while (yield game_cursor.fetch_next):
+                # data_row = {'ga'}
+                doc.append(game_cursor.next_object())
+                
+            
+            self.render('trail.html',data=doc)
+        else :
+            self.redirect("/")
+    
+    # @gen.coroutine
+    # def post(self):
+        # if self.get_secure_cookie("user"):
+            
+            
+        
 class AuthRegistrationHandler(RequestHandler):
     '''Handler for Registration 
     Requires: Request Handler
@@ -127,11 +153,20 @@ def register_user(user,email,password):
 
 
 class GameHandler(RequestHandler):
-	def get(self):
-		if self.get_secure_cookie("user"):
-		    self.render("othello.html")
-		else:
-			self.redirect("/")
+    ''''Game Handler'''
+    @gen.coroutine
+    def get(self):
+        if self.get_secure_cookie("user"):
+            db.game.find()
+            game_cursor= db.user.find() # creates cursor for multiple documents
+            doc=[]
+            while (yield game_cursor.fetch_next):
+                doc.append(game_cursor.next_object())
+            
+            self.render("othello.html",db_data=doc)
+            
+        else:
+            self.redirect("/")
 
 
     # def post(self):

@@ -209,28 +209,22 @@ class OthelloGameManager(GameManager):
         win_str=str("stats.win")
         lose_str=str("stats.lose")
         draw_str=str("stats.draw")
-        #game = self.get_game(game_id)
-        #If status is not already completed
+        
+        
         if result=='A':
-            LOG.info("Updating status for winning result of A {} {}".format(game["othello"].player_a,game["othello"].player_b))
+            
             yield db.user.update({'user':game["othello"].player_a},{'$inc':{win_str:int(1)}})
             yield db.user.update({'user':game["othello"].player_b},{'$inc':{lose_str:int(1)}})
         if result=='B':
-            LOG.info("Updating status for winning result of B ")
+            
             yield db.user.update({'user':game["othello"].player_a},{'$inc':{lose_str:int(1)}})
             yield db.user.update({'user':game["othello"].player_b},{'$inc':{win_str:int(1)}})
         if result=='D':
-            LOG.info("Updating status for winning result of D ")
+            
             yield db.user.update({'user':game["othello"].player_a},{'$inc':{draw_str:int(1)}})
             yield db.user.update({'user':game["othello"].player_b},{'$inc':{draw_str:int(1)}})
             
-        #if document1
-
-        #document2=yield db.col.find_one({'user':game["othello"].player_b})
-
-
         
-        #db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})    
 
 
 
