@@ -217,14 +217,20 @@ var APP = {
       case "open":
         var open_games=data.open_games;
         if(open_games.length==0){
-          $("#gamesTable").hide();
+          $(".collection-item").eq(0).text("There are currently no games available to join");
+          for (j=1; j<10;j++){
+          $(".collection-item").eq(j).hide();
         }
+        }
+        else
+        {
         for (i=0, len=open_games.length; i<len && i<10;i++){
           var gameid = open_games[i];
           $(".collection-item").eq(i).text(gameid);
         }
         for (j=i; j<10;j++){
           $(".collection-item").eq(j).hide();
+        }
         }
         APP.messageUpdate(data.message);
         break;
@@ -269,6 +275,11 @@ var APP = {
       //  APP.gameOn = false
         APP.myTurn = false
         APP.messageUpdate("Connection Error. Waiting for pair to reconnect!")
+        var data = {
+          action: "paused",
+          game_id: data.game_id
+          };
+        APP.sendMessage(data)
         break;
       case "error":
         if (data.message) {

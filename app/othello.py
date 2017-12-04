@@ -29,7 +29,7 @@ class Othello(object):
         """
         # Set board positions
         self.game_choices = self._generate_all_game_positions()
-
+        self.game_status = ""
         self.game_result = ""
         self.player_a=""
         self.player_b=""

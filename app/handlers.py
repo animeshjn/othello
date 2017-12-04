@@ -8,10 +8,11 @@ import bcrypt
 from tornado.web import RequestHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
 from app.game_managers import InvalidGameError
+from app.config import client
 import re
 
 logger = logging.getLogger("app")
-client = motor.motor_tornado.MotorClient()
+
 db = client.othello
 
 class BaseHandler(RequestHandler):
@@ -201,7 +202,8 @@ class GameSocketHandler(WebSocketHandler):
                     resume_gameid=game_id
                     player = "A"
             except KeyError:
-                open_games.append(game_id)
+                if(self.game_manager.get_player_name(game_id, "A")!=user):
+                    open_games.append(game_id)
         logger.info(open_games)
         return (open_games, resume_gameid, player)
 
@@ -288,10 +290,11 @@ class GameSocketHandler(WebSocketHandler):
             else:
                 # Joined the game.
                 self.game_id = game_id
+                self.game_manager.set_game_status(self.game_id,"InProgress")
                 # Tell both players that they have been paired, so reset the pieces
-                self.game_manager.register_player(self.game_id,2,user)
                 player1 = self.game_manager.get_player_name(self.game_id, "A")
-                player2 = self.game_manager.get_player_name(self.game_id, "B")
+                player2 = user
+                self.game_manager.register_players(self.game_id, player1, player2)
                 self.send_message(action="paired", game_id=game_id, player1=player1, player2=player2)
                 self.send_pair_message(action="paired", game_id=game_id, player1=player1, player2 = player2)
                 # One to wait, other to move
@@ -304,14 +307,19 @@ class GameSocketHandler(WebSocketHandler):
         elif action == "new":
             # Create a new game id and respond the game id
             self.game_id = self.game_manager.new_game(self)
-            self.game_manager.register_player(self.game_id,1,user)
+            self.game_manager.set_game_status(self.game_id,"Open")
+            self.game_manager.register_players(self.game_id, user)
             self.send_message(action="wait-pair", game_id=self.game_id)
 
         elif action == "abort":
             self.game_manager.abort_game(self.game_id, self)
+            self.game_manager.set_game_status(self.game_id,"Aborted")
             self.send_message(action="end", game_id=self.game_id, result="L")
             self.send_pair_message(action="end", game_id=self.game_id, result="W")
             self.game_manager.end_game(self.game_id)
+        elif action == "paused":
+            self.game_manager.set_game_status(self.game_id,"Paused")
+            self.game_manager.audit_trail(self.game_id, "Paused")
         else:
             self.send_message(action="error", message="Unknown Action: {}".format(action))
 
@@ -321,7 +329,7 @@ class GameSocketHandler(WebSocketHandler):
         Close Game, send message to Paired client that game has ended
         """
         self.send_pair_message(action="conn_error", game_id=self.game_id)#, result="A")
-        self.game_manager.audit_trail(self.game_id, "Paused")
+        
 
     def send_pair_message(self, action, **data):
         """Send Message to paired Handler
