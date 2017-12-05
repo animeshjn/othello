@@ -33,9 +33,9 @@ class Othello(object):
         self.game_result = ""
         self.player_a=""
         self.player_b=""
-        self.player_a_choices = set([(3,3), (4,4)])
-        self.player_b_choices = set([(3,4), (4,3)])
-        self.player_a_open = set([(3,5), (5,3), (2,4), (4,2)])
+        self.player_a_choices = set([(3,4), (4,3)])
+        self.player_b_choices = set([(3,3), (4,4)])
+        self.player_a_open = set([(2,3), (3,2), (4,5), (5,4)])
         self.player_b_open = set()
         self.player_a_moves = set()
         self.player_b_moves = set()

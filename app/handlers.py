@@ -12,7 +12,7 @@ from app.config import client
 import re
 
 logger = logging.getLogger("app")
-client = motor.motor_tornado.MotorClient()
+#client = motor.motor_tornado.MotorClient()
 db = client.othello
 
 class BaseHandler(RequestHandler):
@@ -219,7 +219,7 @@ class GameSocketHandler(WebSocketHandler):
         message = "Hello "+user+" , you are connected to Game Server"
         (open_games, resume_gameid, player)=self.search_games(user)
         if(resume_gameid==None):
-            self.send_message(action="open", message=message, open_games=open_games)
+            self.send_message(action="open", message=message, open_games=open_games, user=user)
         else:
             self.resume_game(resume_gameid, player)    
 
@@ -303,11 +303,12 @@ class GameSocketHandler(WebSocketHandler):
                 self.send_message(action="paired", game_id=game_id, player1=player1, player2=player2)
                 self.send_pair_message(action="paired", game_id=game_id, player1=player1, player2 = player2)
                 # One to wait, other to move
-                opp_choices = set([(3,3), (4,4)])
-                my_choices = set([(3,4), (4,3)])
-                self.send_message(action="opp-move", my_move=list(my_choices), opp_move=list(opp_choices))
-                opp_open = set([(3,5), (5,3), (2,4), (4,2)])
-                self.send_pair_message(action="move", opp_move=list(my_choices), my_move=list(opp_choices), unlock=list(opp_open))
+                opp_choices = set([(3,4), (4,3)])
+                my_choices = set([(3,3), (4,4)])
+                handler="B"
+                self.send_message(action="opp-move", my_handler=handler, my_move=list(my_choices), opp_move=list(opp_choices))
+                opp_open = set([(2,3), (3,2), (4,5), (5,4)])
+                self.send_pair_message(action="move", my_handler=handler, opp_move=list(my_choices), my_move=list(opp_choices), unlock=list(opp_open))
 
         elif action == "new":
             # Create a new game id and respond the game id
@@ -325,6 +326,11 @@ class GameSocketHandler(WebSocketHandler):
         elif action == "paused":
             self.game_manager.set_game_status(self.game_id,"Paused")
             self.game_manager.audit_trail(self.game_id, "Paused")
+        elif action == "forfeit":
+            self.game_manager.forfeit_game(self.game_id, self)
+            self.game_manager.set_game_status(self.game_id,"Error")
+            self.send_message(action="end", game_id=self.game_id, result="F")
+            self.game_manager.end_game(self.game_id)
         else:
             self.send_message(action="error", message="Unknown Action: {}".format(action))
 
