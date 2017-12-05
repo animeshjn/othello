@@ -12,7 +12,7 @@ from app.config import client
 import re
 
 logger = logging.getLogger("app")
-#client = motor.motor_tornado.MotorClient()
+client = motor.motor_tornado.MotorClient()
 db = client.othello
 
 class BaseHandler(RequestHandler):

@@ -49,14 +49,15 @@
     <div class="one-third column">
       {% module xsrf_form_html() %}
       <form action="/" >
-        {% module xsrf_form_html() %}
+        {% module xsrf_form_html() %}        
       <button class="btn btn-danger" type="submit" id="game-home">
         Back To Play
-      </button>  
+      </button>  </form>
     </div>
     <div class="one-third column">
     <form action="/auth/logout" method="post">
       {% module xsrf_form_html() %}
+      
     <button class="btn btn-danger" type="submit" id="game-logout">
       Log out
     </button>
