@@ -11,12 +11,13 @@
   }
 
   ul.row li  {
-      display: inline;
+      display: inline-block;
   }
 
   button.btn-marker  {
     padding: 0;
     margin: 0;
+    /*background-color: #4CAF50;*/
   }
 
   button span {
@@ -74,9 +75,11 @@
     <table class="table">
           <thead>
               <tr>
-                  <th scope="col">User Statistics</th>
-                  
-                </tr>
+                  <th scope="col">User: <a id="uname"></a></th>
+              </tr>
+              <tr>
+                <th scope="col">Your Game Statistics</th>
+              </tr>
             <tr>
               <th scope="col">Won</th>
               <th scope="col">Lost</th>
@@ -111,12 +114,12 @@
         <tbody>
           <tr>
             <td class="p1name"></td>
-            <td><i class="material-icons">radio_button_unchecked</i></td>
+            <td><i class="material-icons">brightness_1</i></td>
             <td class="p1score"></td>
           </tr>
           <tr>
             <td class="p2name"></td>
-            <td><i class="material-icons">brightness_1</i></td>
+            <td><i class="material-icons">radio_button_unchecked</i></td>
             <td class="p2score"></td>
           </tr>
           </tbody>

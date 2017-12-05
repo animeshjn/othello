@@ -7,7 +7,7 @@ import motor.motor_tornado
 import logging
 import logging.config
 
-client = motor.motor_tornado.MotorClient()
+#client = motor.motor_tornado.MotorClient()
 
 db = client.othello
 LOG = logging.getLogger('app')
@@ -134,7 +134,21 @@ class OthelloGameManager(GameManager):
             game["result"] = "E"
         game["othello"].game_result = game["result"]
         othello.abort_game()
-        self.audit_trail(game_id, "Aborted")        
+        self.audit_trail(game_id, "Aborted") 
+
+    def forfeit_game(self, game_id, handler):
+        game = self.get_game(game_id)
+        othello = game["othello"]
+        if(othello.game_status=="Paused"):
+            if (game["handler_a"] == handler):
+                game["result"] = "A"
+            else:
+                game["result"] = "B"
+        else:
+            game["result"] = "E"
+        game["othello"].game_result = game["result"]
+        othello.abort_game()
+        self.audit_trail(game_id, "Forfeited")           
         
     def has_game_ended(self, game_id):
         """Returns True if the game has ended.

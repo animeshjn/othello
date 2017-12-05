@@ -5,6 +5,7 @@ var APP = {
   myTurn: false,
   gameOn: false,
   gameId: null,
+  timer: null,
 
   sendMessage: function(data) {
     APP.socket.send(JSON.stringify(data));
@@ -135,15 +136,15 @@ var APP = {
 
     if(data.opp_handler=="A")
     {
-      myButton = String.fromCharCode(9679);
-      oppButton =  String.fromCharCode(9675);
+      myButton = String.fromCharCode(9675);
+      oppButton =  String.fromCharCode(9679);
       $("td.p1score").text(oppMove.length);
       $("td.p2score").text(myMove.length);
     }
     else
     {
-     myButton = String.fromCharCode(9675);
-     oppButton =  String.fromCharCode(9679);
+     myButton = String.fromCharCode(9679);
+     oppButton =  String.fromCharCode(9675);
      $("td.p1score").text(myMove.length);
      $("td.p2score").text(oppMove.length);
     }
@@ -182,15 +183,15 @@ var APP = {
 
     if(data.my_handler=="A")
     {
-      myButton = String.fromCharCode(9675);
-      oppButton =  String.fromCharCode(9679);
+      myButton = String.fromCharCode(9679);
+      oppButton =  String.fromCharCode(9675);
       $("td.p1score").text(myMove.length);
       $("td.p2score").text(oppMove.length);
     }
     else
     {
-     myButton = String.fromCharCode(9679);
-     oppButton =  String.fromCharCode(9675);
+     myButton = String.fromCharCode(9675);
+     oppButton =  String.fromCharCode(9679);
      $("td.p1score").text(oppMove.length);
      $("td.p2score").text(myMove.length);
     }
@@ -212,9 +213,42 @@ var APP = {
 
   },
 
+  timeout: function(data){
+    // Update the count down every 1 second
+    var countDown = new Date().getTime();
+    var duration = 10*60*1000; // 10 minutes in ms
+    countDown=countDown+duration;
+    var game_id = data.game_id;
+    APP.timer = setInterval(function() {
+    var now = new Date().getTime();  
+    var distance = countDown-now;
+    
+    // Time calculations for days, hours, minutes and seconds
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    
+    message = "Connection Error. Waiting for pair to reconnect in "
+    // Output the result in an element with id="demo"
+    $("#message").text(message+ minutes + "m " + seconds + "s ");
+    
+    // If the count down is over, write some text 
+    if (distance < 0) {
+        clearInterval(APP.timer);
+        $("#message").text("You Won! Opponent forfeited");
+        var data = {
+          action: "forfeit",
+          game_id: game_id
+          };
+        APP.sendMessage(data)
+    }
+}, 1000);
+
+  },
+
   serverMessage: function(action, data) {
     switch (action) {
       case "open":
+        $("#uname").text(data.user) 
         var open_games=data.open_games;
         if(open_games.length==0){
           $(".collection-item").eq(0).text("There are currently no games available to join");
@@ -246,10 +280,16 @@ var APP = {
         APP.messageUpdate("Game Started...");
         break;
       case "move":
+        if(APP.timer!=null){
+          clearInterval(APP.timer);
+        }
         APP.opponentMove(data);
         APP.messageUpdate("Your Move...")
         break;
       case "opp-move":
+       if(APP.timer!=null){
+          clearInterval(APP.timer);
+        }
         APP.myTurn = false;
         APP.myMove(data);
         APP.messageUpdate("Waiting for pair to Move...")
@@ -267,6 +307,8 @@ var APP = {
           APP.messageUpdate("Draw.  Good game.");
         } else if (data.result == "A") {
           APP.messageUpdate("Game Aborted.")
+        } else if (data.result == "F") {
+          APP.messageUpdate("You Won! Opponent forfeited")
         } else {
           APP.messageUpdate("Game Ended.");
         }
@@ -280,6 +322,7 @@ var APP = {
           game_id: data.game_id
           };
         APP.sendMessage(data)
+        APP.timeout(data)
         break;
       case "error":
         if (data.message) {
