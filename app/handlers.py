@@ -12,7 +12,7 @@ from app.config import client
 import re
 
 logger = logging.getLogger("app")
-client = motor.motor_tornado.MotorClient()
+#client = motor.motor_tornado.MotorClient()
 db = client.othello
 
 class BaseHandler(RequestHandler):
@@ -39,7 +39,9 @@ class GameShowHandler(RequestHandler):
             i = 0
             while (yield game_cursor.fetch_next):
                 # data_row = {'ga'}
-                doc.append(game_cursor.next_object())
+                document = game_cursor.next_object()
+                if (document['status']!="InProgress"):
+                    doc.append(document)
                 
             
             self.render('trail.html',data=doc)
@@ -238,18 +240,22 @@ class GameSocketHandler(WebSocketHandler):
         player_turn = self.game_manager.get_player_turn(self.game_id)
         if (player=="A"): 
             if (player_turn == "A"): # Player A resumed, player A's turn
-                self.send_message(action="move", my_move=list(player_a_choices), opp_move=list(player_b_choices), unlock=list(player_a_open)) #Message to Player A
-                self.send_pair_message(action="opp-move", opp_move=list(player_a_choices), my_move=list(player_b_choices)) # Message to PLayer B       
+                handler = "B"
+                self.send_message(action="move", opp_handler=handler, my_move=list(player_a_choices), opp_move=list(player_b_choices), unlock=list(player_a_open)) #Message to Player A
+                self.send_pair_message(action="opp-move", my_handler=handler, opp_move=list(player_a_choices), my_move=list(player_b_choices)) # Message to PLayer B       
             else: # Player A resumed, player B turn
-                self.send_message(action="opp-move", my_move=list(player_a_choices), opp_move=list(player_b_choices)) #Message to Player A
-                self.send_pair_message(action="opp-move", opp_move=list(player_a_choices), my_move=list(player_b_choices), unlock=list(player_b_open)) # Message to PLayer B       
+                handler = "A"
+                self.send_message(action="opp-move", my_handler=handler, my_move=list(player_a_choices), opp_move=list(player_b_choices)) #Message to Player A
+                self.send_pair_message(action="move", opp_handler=handler, opp_move=list(player_a_choices), my_move=list(player_b_choices), unlock=list(player_b_open)) # Message to PLayer B       
         else: # Player B resumed
             if (player_turn == "A"): # Player B resumed, player A's turn
-                self.send_message(action="opp-move", my_move=list(player_b_choices), opp_move=list(player_a_choices)) #Message to Player B
-                self.send_pair_message(action="move", opp_move=list(player_b_choices), my_move=list(player_a_choices), unlock=list(player_a_open)) # Message to PLayer A       
+                handler = "B"
+                self.send_message(action="opp-move", my_handler=handler, my_move=list(player_b_choices), opp_move=list(player_a_choices)) #Message to Player B
+                self.send_pair_message(action="move", opp_handler=handler, opp_move=list(player_b_choices), my_move=list(player_a_choices), unlock=list(player_a_open)) # Message to PLayer A       
             else: # Player B resumed, player B turn
-                self.send_message(action="move", my_move=list(player_b_choices), opp_move=list(player_a_choices), unlock=list(player_b_open)) #Message to Player B
-                self.send_pair_message(action="opp-move", opp_move=list(player_b_choices), my_move=list(player_a_choices)) # Message to PLayer A       
+                handler = "A"
+                self.send_message(action="move", opp_handler=handler, my_move=list(player_b_choices), opp_move=list(player_a_choices), unlock=list(player_b_open)) #Message to Player B
+                self.send_pair_message(action="opp-move", my_handler=handler, opp_move=list(player_b_choices), my_move=list(player_a_choices)) # Message to PLayer A       
 
     def on_message(self, message):
         """Respond to messages from connected client.

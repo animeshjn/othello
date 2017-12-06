@@ -7,7 +7,7 @@ import motor.motor_tornado
 import logging
 import logging.config
 
-client = motor.motor_tornado.MotorClient()
+#client = motor.motor_tornado.MotorClient()
 
 db = client.othello
 LOG = logging.getLogger('app')
@@ -190,7 +190,7 @@ class OthelloGameManager(GameManager):
 
     def get_player_turn(self, game_id):
         game = self.get_game(game_id)
-        if(game["othello"].player_a_turn):
+        if(game["othello"].player_a_turn==True):
             return "A"
         else:
             return "B"
@@ -215,7 +215,9 @@ class OthelloGameManager(GameManager):
             result="NA"
         else:
             result=game["othello"].game_result
-        if not status == "Completed":
+
+        document = yield db.game.find_one({'_id': game_id })
+        if ((document['status'] == "InProgress") or (document['status'] == "Paused")):
             db.game.update_one({'_id':game_id},{'$set': {'status':status, 'result':result, 'score': (len(game["othello"].player_a_choices),len(game["othello"].player_b_choices)), 'p1moves': list(game["othello"].player_a_moves), 'p2moves': list(game["othello"].player_b_moves)}})
             LOG.info("Trail update called once {} {}".format(game["othello"].player_a,game["othello"].player_b))
             yield self.update_stats(game,result)

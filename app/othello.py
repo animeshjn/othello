@@ -91,7 +91,7 @@ class Othello(object):
         """
         if ((len(self.player_a_open)==0) or (len(self.player_b_open)==0)):
             if player_marker==self.player_a_marker:
-                if(len(self.player_a_choices)>len(self.player_a_choices)):
+                if(len(self.player_a_choices)>len(self.player_b_choices)):
                     return True
                 else:
                     return False
