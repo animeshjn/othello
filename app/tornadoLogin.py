@@ -46,7 +46,7 @@ logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
 #client = motor.motor_tornado.MotorClient()
-client = motor.motor_tornado.MotorClient()
+#client = motor.motor_tornado.MotorClient()
 db = client.othello
 
 class MainHandler(tornado.web.RequestHandler):
